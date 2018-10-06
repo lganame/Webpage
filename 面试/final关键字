@@ -1,0 +1,496 @@
+[]
+
+原
+
+java final 关键字
+
+2010年11月25日 20:10:00 niguang09 阅读数：59216 标签： java class 编译器 
+reference constants string
+
+   根据上下文环境，java的关键字final也存在着细微的区别，但通常指的是“这是无法改
+变的。”不想改变的理由由两种：一种是效率，另一种是设计。由于两个原因相差很远，所
+以关键子final可能被吴用。
+
+   接下来介绍一下使用到fianl的三中情况：数据，方法，类。
+
+  
+
+   final数据
+
+   许多编程语言都有某种方法，来向编译器告知一块数据是恒定不变的。有时数据的恒定
+不变是很有用的，例如：
+
+1，一个编译时恒定不变的常量
+
+2，一个在运行时初始化，而你不希望它被改变。
+
+   对于编译期常量的这种情况，编译器可以将该常量值代入任何可能用到它的计算式中，
+也就是说，可以在编译期就执行计算式，这减轻了一些运行时的负担。在java中，这类常
+量必须是基本类型，并且以final表示。在对这个常量定义时，必须进行赋值。
+
+   一个即是static又是fianl的域只占一段不能改变的存储空间。
+
+   当final应用于对象引用时，而不是基本类型时，其含义有些让人疑惑。对基本类型使
+用fianl不能改变的是他的数值。而对于对象引用，不能改变的是他的引用，而对象本身是
+可以修改的。一旦一个final引用被初始化指向一个对象，这个引用将不能在指向其他对象
+。java并未提供对任何对象恒定不变的支持。这一限制也通用适用于数组，它也是对象。
+
+   下面的事例示范fianl域的情况。注意，根据惯例，即是static又是fianl的域(即编译
+器常量)将用大写表示，并用下划分割个单词：
+
+[ package reusing;                                                                       ]
+[                                                                                        ]
+[//: reusing/FinalData.java                                                              ]
+[// The effect of final on fields.                                                       ]
+[import java.util.*;                                                                     ]
+[import static net.mindview.util.Print.*;                                                ]
+[                                                                                        ]
+[class Value {                                                                           ]
+[  int i; // Package access                                                              ]
+[  public Value(int i) { this.i = i; }                                                   ]
+[}                                                                                       ]
+[                                                                                        ]
+[                                                                                        ]
+[                                                                                        ]
+[public class FinalData {                                                                ]
+[  private static Random rand = new Random(47);                                          ]
+[  private String id;                                                                    ]
+[  public FinalData(String id) { this.id = id; }                                         ]
+[  // Can be compile-time constants:                                                     ]
+[  private final int valueOne = 9;                                                       ]
+[  private static final int VALUE_TWO = 99;                                              ]
+[  // Typical public constant:                                                           ]
+[  public static final int VALUE_THREE = 39;                                             ]
+
+     由于valueOne和VALUE_TWO都是带有编译时数值的fianl基本类型，所以它们二者均可
+以用作编译期常量，并且没有重大区别。VALUE_THREE是一种更加典型的对常量进行定义的
+方式：定义为public，可以被任何人访问；定义为static，则强调只有一份；定义为fianl
+，这说明它是个常量。请注意带有恒定初始值(即，编译期常量)的final static基本类型
+全用大写字母命名，并且字母与字母之间用下划线隔开。
+
+   我们不能因为某些数据是fianl的就认为在编译时可以知道它的值。在运行时使用随机
+数来初始化i4和INT_5的值叫说明了这一点。事例部分也展示了将fianl数据定义为static
+和非static的区别。此区别只有当数值在运行时内被初始化时才会显现，这是因为在编译
+器对编译时的数值一视同仁(并且他们可能因为优化而消失)。当运行时会看见这个区别。
+请注意，在此fd1和fd2中i4的值是唯一的，每次都会被初始化为15,13。INT_5的值是不可
+以通过创建第二个FinalData对象加以改变的。这是因为他是static的，在装载类时(也就
+是第一次创建这个类对象时)已经被初始化，而不是每次创建都初始化。
+
+   
+
+
+如果看上面的事例来理解我标记颜色的的部分有点困难的话，请看下面的事例：
+
+   
+
+ 
+[public class B3 {                                                                        ]
+[ static Random r =new Random(12);                                                        ]
+[ final int int1= r.nextInt(100);//产生0-99的随机数                                       ]
+[ static final int INT_2= r.nextInt(100);                                                 ]
+[                                                                                         ]
+[                                                                                         ]
+[ public static void main(String[] args) {                                                ]
+[  B3 b1=new B3();                                                                        ]
+[  System.out.println("int1:"+b1.int1+"    INT_2:"+b1.INT_2);                             ]
+[  B3 b2=new B3();                                                                        ]
+[  //b2.INT_2=100;//错误的赋值                                                            ]
+[  System.out.println("int1:"+b2.int1+"    INT_2:"+b2.INT_2);                             ]
+[                                                                                         ]
+[ }                                                                                       ]
+[                                                                                         ]
+
+启动main()先执行的是B3 b1=new B3();，创建B3的第一个对象，这将会先初始化static
+final int INT_2= r.nextInt(100);，然后是初始化final int int1= r.nextInt(100);，
+所以第一条输出语句的结果是int1:12    INT_2:66。接下来创建B3的第二个对象，这也会
+导致B3类中成员的初始化，但static final int INT_2= r.nextInt(100);不会在被初始化
+，为什么前面已经提过。输出的结果是int1:56    INT_2:66。两次的输出INT_2的值都是
+一样的。
+
+   在说回我们的第一个事例，V1到VAL_3说明final引用的意义。正如在main()方法中看见
+的，可以改变对象数组a的值，但不能将a的引用指向另一个对象。看起来使基本类型成为
+fianl比引用类型成为final的用处大。
+
+    java也许生成"空白final",所谓空白final是指被声明为final但又未给初值的域。无
+论什么情况下编译器都会保证final域在使用前初始化。但空白final在fianl的使用上提供
+了很大的灵活性，为此，一个fianl域可以根据某些对象有所不同，却又保持恒定不变的特
+性。下面的事例说明了一点。
+
+ 
+[class Poppet {                                                                            ]
+[  private int i;                                                                          ]
+[  Poppet(int ii) { i = ii; }                                                              ]
+[}                                                                                         ]
+[                                                                                          ]
+[public class BlankFinal {                                                                 ]
+[  private final int i = 0; // Initialized final                                           ]
+[  private final int j; // Blank final                                                     ]
+[  private final Poppet p; // Blank final reference                                        ]
+[  // Blank finals MUST be initialized in the constructor:                                 ]
+[  public BlankFinal() {                                                                   ]
+[    j = 1; // Initialize blank final                                                      ]
+[    p = new Poppet(1); // Initialize blank final reference                                ]
+[  }                                                                                       ]
+[  public BlankFinal(int x) {                                                              ]
+[    j = x; // Initialize blank final                                                      ]
+[    p = new Poppet(x); // Initialize blank final reference                                ]
+
+ 
+
+final 参数
+
+      java中也许将参数列表中的参数以声明的方式声指明为final。这意味着你无发改变
+参数所指向的对象。
+
+[class Gizmo {                                                                      ]
+[  public void spin() {}                                                            ]
+[}                                                                                  ]
+[                                                                                   ]
+[public class FinalArguments {                                                      ]
+[  void with(final Gizmo g) {                                                       ]
+[    //! g = new Gizmo(); // Illegal -- g is final                                  ]
+[  }                                                                                ]
+[  void without(Gizmo g) {                                                          ]
+[    g = new Gizmo(); // OK -- g not final                                          ]
+[    g.spin();                                                                      ]
+[  }                                                                                ]
+[  // void f(final int i) { i++; } // Can't change                                  ]
+[  // You can only read from a final primitive:                                     ]
+[  int g(final int i) { return i + 1; }                                             ]
+[  public static void main(String[] args) {                                         ]
+[    FinalArguments bf = new FinalArguments();                                      ]
+
+方法f()g()展示了基本类型的参数被指定为final是所出现的结果：你可以读参数，但不能
+修改参数。这一特性只要用来向匿名内部类传递数据。
+
+final 方法
+
+   使用final方法有两个原因。第一个原因是把方法锁定，以防止任何继承它的类修改它
+的含义。这是出于设计的考虑：想要确保在继承中使用的方法保持不变，并且不会被覆盖
+。
+
+   过去建议使用final方法的第二个原因是效率。在java的早期实现中，如果将一个方法
+指明为fianl，就是同意编译器将针对该方法的所有调用都转为内嵌调用。当编译器发现一
+个final方法调用命令时，它会根据自己的谨慎判断，跳过插入程序代码这种正常的调用方
+式而执行方法调用机制（将参数压入栈，跳至方法代码处执行，然后跳回并清理栈中的参
+数，处理返回值），并且以方法体中的实际代码的副本来代替方法调用。这将消除方法调
+用的开销。当然，如果一个方法很大，你的程序代码会膨胀，因而可能看不到内嵌所带来
+的性能上的提高，因为所带来的性能会花费于方法内的时间量而被缩减。
+
+    上面标颜色的地方不太懂。不知道那位看过Java编程思想和知道的高人给解释解释。
+
+    在最进的java版本中，虚拟机(特别是hotspot技术)可以探测到这些情况，并优化去掉
+这些效率反而降低的额外的内嵌调用，因此不再需要使用final方法来进行优化了。事实上
+，这种做法正逐渐受到劝阻。在使用java se5/6时，应该让编译器和JVM去处理效率问题，
+只有在想明确禁止覆盖式，才将方法设置为fianl的。
+
+    final和private关键字
+
+   类中的所有private方法都是隐式的制定为final的。由于你无法访问private方法你也
+就无法覆盖它。可以对private方法添加final修饰词，但这毫无意义。
+
+[class WithFinals {                                ]
+[  // Identical to "private" alone:                ]
+[  private final void f() { print("WithFinals.f()")]
+[  // Also automatically "final":                  ]
+[  private void g() { print("WithFinals.g()"); }   ]
+[}                                                 ]
+[                                                  ]
+[class OverridingPrivate extends WithFinals {      ]
+[  private final void f() {                        ]
+[    print("OverridingPrivate.f()");               ]
+[  }                                               ]
+[  private void g() {                              ]
+[    print("OverridingPrivate.g()");               ]
+[  }                                               ]
+[}                                                 ]
+
+     "覆盖"只有在某方法是基类接口的一部分时才会发生。即，必须将一个对象向上转型
+为它的基类并条用相同的方法。如果某方法是private的，它就不是基类接口的一部分。它
+仅是一些隐藏于类中的程序代码，如果一个基类中存在某个private方法，在派生类中以相
+同的名称创建一个public，protected或包访问权限方法的话，该方法只不过是与基类中的
+方法有相同的名称而已，并没有覆盖基类方法。由于private方法无法触及且有很好的隐藏
+性，所以把它看成是因为他所属类的组织结的原因而存在外，其他任何事物都不用考虑。
+
+    final 类
+
+    当将类定义为final时，就表明了你不打算继承该类，而且也不也许别人这样做。换句
+话说，出于某种考虑，你对该类的设计永不需要做任何变动，或者出于安全的考虑，你不
+希望他有子类。
+
+[class SmallBrain {}                               ]
+[                                                  ]
+[final class Dinosaur {                            ]
+[  int i = 7;                                      ]
+[  int j = 1;                                      ]
+[  SmallBrain x = new SmallBrain();                ]
+[  void f() {}                                     ]
+[}                                                 ]
+[                                                  ]
+[//! class Further extends Dinosaur {}             ]
+[// error: Cannot extend final class 'Dinosaur'    ]
+[                                                  ]
+[public class Jurassic {                           ]
+[  public static void main(String[] args) {        ]
+[    Dinosaur n = new Dinosaur();                  ]
+
+    请注意，final类的域可以根据个人的意愿选择是或不是final。不论类是否被定义为
+final，相同的规则同样适用于定义为final的域。然而，由于final是无法继承的，所以被
+final修饰的类中的方法都隐式的制定为fianl，因为你无法覆盖他们。在fianl类中可以给
+方法添加final，但这不会产生任何意义。
+
+阅读更多登录后自动展开
+想对作者说点什么？我来说一句
+ 
+
+java中的final关键字所起的作用
+
+linchunhua linchunhua
+
+02-10 2.5万
+
+final的作用随着所修饰的类型而不同       1、final修饰类中的属性或者变量
+              无论属性是基本类型还是引用类型，final所起的作用都是变量里面存放的
+“值”不能变。...
+
+ 
+
+java中final关键字的作用
+
+m0_37695351 m0_37695351
+
+10-11 2651
+
+final关键字可以用于三个地方。用于修饰类、类属性和类方法。      被final关键字修
+饰的类不能被继承，被final关键字修饰的类属性和类方法不能被覆盖（重写）；      对
+于被fina...
+
+ 
+
+有关Java中关键字final的理解
+
+scuhank scuhank
+
+04-06 1.1万
+
+一、final数据在java编程语言中，有时候需要告知编译器一段数据是不变的编译期常量。
+对于这种情况，编译器可以将此常量值带入需要用到它的计算式子当中，这种在编译时执
+行计算式的方法减轻了运行时的开销。...
+
+ 
+
+final
+
+wwwtotoro wwwtotoro
+
+04-23 284
+
+final在Java中是一个保留的关键字，可以声明属性、方法、类。一旦你将引用声明作
+final，你将不能改变这个引用了，编译器会检查代码，如果你试图将变量再次初始化的话
+，编译器会报编译错误。什么是f...
+
+ 
+
+java中的final如何使用和理解
+
+sunbinkang sunbinkang
+
+01-09 1924
+
+1、final类不能被继承，因此final类的成员方法没有机会被覆盖，默认都是final的。在
+设计类时候，如果这个类不需要有子类，类的实现细节不允许改变，并且确信这个类不会
+再被扩展，那么就设计为fin...
+
+ 
+
+深入理解Java中的final关键字
+
+xiaoxiaoyusheng2012 xiaoxiaoyusheng2012
+
+01-09 678
+
+      转自：http://www.importnew.com/7553.html        Java中的final关键字非常重
+要，它可以应用于类、方法以及变量。这篇文章中我将带你看...
+
+ 
+
+Java - Java中的final关键字有哪些用法？
+
+chimomo chimomo
+
+10-26 1249
+
+(1)修饰类：表示该类不能被继承；(2)修饰方法：表示方法不能被重写；(3)修饰变量：表
+示变量只能赋值一次且赋值以后值不能被修改（常量）。...
+
+ 
+
+深入理解final关键字
+
+IO_Field IO_Field
+
+10-16 3497
+
+在Java中，final关键字可以用来修饰数据、方法、参数、类，下面我们来了解final的关
+键字的用法。基本用法final 数据对于基本类型，final使数值恒定不变；而对用对象引用
+，final使引用...
+
+ 
+
+@Autowired的使用：推荐对构造函数进行注释
+
+qq_28587263 qq_28587263
+
+07-20 3746
+
+在编写代码的时候，使用@Autowired注解是，发现IDE报的一个警告，如下：　　Spring
+Team recommends “Always use constructor based depen...
+
+ 
+
+Spring自动装配@Autowired的三种方式
+
+jkguang jkguang
+
+06-29 4886
+
+转自：https://ahaochan.github.io/Java/JavaWeb/Spring/
+Spring%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D@Autowir...
+
+文章热词
+
+java word打开 java 模板+参数 java收集控制台一行 java代码抽奖 java 对象动态堆
+
+相关热词
+
+java‖ 与java java的～ java　 java和--
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+个人资料
+
+[3_niguang0]
+
+niguang09
+
+关注
+
+原创
+    15
+
+粉丝
+    45
+
+喜欢
+    5
+
+评论
+    22
+
+等级：
+     
+
+访问：
+    23万+
+
+积分：
+    1607
+
+排名：
+    3万+
+
+最新文章
+
+  • tomcat启动报错 java.net.SocketException: select failed
+  • W3C是什么?什么是W3C标准?
+  • Web Service 原理理解
+  • java语言反射机制
+  • java ==与equals （老问题了。。。）
+
+个人分类
+
+  • java 9篇
+  • Webservice 1篇
+
+归档
+
+  • 2012年4月 2篇
+  • 2012年2月 4篇
+  • 2011年11月 1篇
+  • 2011年8月 1篇
+  • 2011年5月 1篇
+  • 2011年3月 3篇
+  • 2010年12月 1篇
+  • 2010年11月 5篇
+  • 2010年10月 2篇
+  • 2010年8月 1篇
+
+展开
+
+热门文章
+
+  • java final 关键字
+
+    阅读量：59207
+
+  • java /n /r /t
+
+    阅读量：42753
+
+  • java 基本数据类型初始值(默认值)
+
+    阅读量：34288
+
+  • 计算机存储单位：bit, Byte, KB, MB, GB, TB, PB, EB, ZB, BB
+
+    阅读量：23985
+
+  • linux命令看文件或文件夹个数
+
+    阅读量：12502
+
+最新评论
+
+  • java String的经典问题(...
+
+    kkloveit：System.out.println(str1 == str2.intern());这个返回的是t...
+
+  • tomcat启动报错 java.n...
+
+    island8：第二个方法好用~~非常感谢
+
+  • tomcat启动报错 java.n...
+
+    bigpaddy：方法二可以
+
+  • tomcat启动报错 java.n...
+
+    LeonWang_Fly：方法二测试，管用，用管理员权限执行然后重启系统就ok了
+
+  • tomcat启动报错 java.n...
+
+    LeonWang_Fly：方法二测试，管用，用管理员权限执行然后重启系统就ok了
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    1
+   
+  • 评论
+
+    9
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

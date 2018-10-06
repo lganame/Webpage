@@ -1,0 +1,405 @@
+hoojo
+学习在于积累：滴水可以石穿！学而不思则罔，思而不学则殆！
+博客园   首页   新随笔   联系   订阅订阅  管理
+随笔-157  评论-1337  文章-3 
+
+Java Thread 多线程同步、锁、通信
+
+    线程同步、同步锁、死锁
+
+    线程通信
+
+    线程组和未处理异常
+
+    Callable和Future
+
+12、线程同步
+
+    当多个线程访问同一个数据时，非常容易出现线程安全问题。这时候就需要用线程同步
+
+    Case：银行取钱问题，有以下步骤：
+
+    A、用户输入账户、密码，系统判断是否登录成功
+
+    B、用户输入取款金额
+
+    C、系统判断取款金额是否大于现有金额
+
+    D、如果金额大于取款金额，就成功，否则提示小于余额
+
+ 
+
+    现在模拟2个人同时对一个账户取款，多线程操作就会出现问题。这时候需要同步才行；
+
+    同步代码块：
+
+    synchronized (object) {
+
+        //同步代码
+
+    }
+
+    Java多线程支持方法同步，方法同步只需用用synchronized来修饰方法即可，那么这个方法就是同步方法了。
+
+    对于同步方法而言，无需显示指定同步监视器，同步方法监视器就是本身this
+
+    同步方法：
+
+    public synchronized void editByThread() {
+
+        //doSomething
+
+    }
+
+ 
+
+    需要用同步方法的类具有以下特征：
+
+    A、该类的对象可以被多个线程访问
+
+    B、每个线程调用对象的任意都可以正常的结束，返回正常结果
+
+    C、每个线程调用对象的任意方法后，该对象状态保持合理状态
+
+    不可变类总是线程安全的，因为它的对象状态是不可改变的，但可变类对象需要额外的方法来保证线程安全。
+
+    例如Account就是一个可变类，它的money就是可变的，当2个线程同时修改money时，程序就会出现异常或错误。
+
+    所以要对Account设置为线程安全的，那么就需要用到同步synchronized关键字。
+
+
+
+
+
+    下面的方法用synchronized同步关键字修饰，那么这个方法就是一个同步的方法。这样就只能有一个线程可以访问这个方法，
+
+    在当前线程调用这个方法时，此方法是被锁状态，同步监视器是this。只有当此方法修改完毕后其他线程才能调用此方法。
+
+    这样就可以保证线程的安全，处理多线程并发取钱的的安全问题。
+
+    public synchronized void drawMoney(double money) {
+
+        //取钱操作
+
+    }
+
+    注意：synchronized可以修饰方法、代码块，但不能修饰属性、构造方法
+
+
+
+    可变类的线程安全是以降低程序的运行效率为代价，为了减少线程安全所带来的负面影响，可以采用以下策略：
+
+    A、不要对线程安全类的所有方法都采用同步模式，只对那些会改变竞争资源（共享资源）的方法进行同步。
+
+    B、如果可变类有2中运行环境：单线程环境和多线程环境，则应该为该可变提供2种版本；线程安全的和非线程安全的版本。
+
+    在单线程下采用非线程安全的提高运行效率保证性能，在多线程环境下采用线程安全的控制安全性问题。
+
+
+
+    释放同步监视器的锁定
+
+    任何线程进入同步代码块、同步方法之前，必须先获得对同步监视器的锁定，那么何时会释放对同步监视器锁定？
+
+    程序无法显示的释放对同步监视器的锁定，线程可以通过以下方式释放锁定：
+
+    A、当线程的同步方法、同步代码库执行结束，就可以释放同步监视器
+
+    B、当线程在同步代码库、方法中遇到break、return终止代码的运行，也可释放
+
+    C、当线程在同步代码库、同步方法中遇到未处理的Error、Exception，导致该代码结束也可释放同步监视器
+
+    D、当线程在同步代码库、同步方法中，程序执行了同步监视器对象的wait方法，导致方法暂停，释放同步监视器
+
+ 
+
+    下面情况不会释放同步监视器：
+
+    A、当线程在执行同步代码库、同步方法时，程序调用了Thread.sleep()/Thread.yield()方法来暂停当前程序，当前程序不会释放同步监视器
+
+    B、当线程在执行同步代码库、同步方法时，其他线程调用了该线程的suspend方法将该线程挂起，该线程不会释放同步监视器。注意尽量避免使用suspend、resume
+
+
+
+    同步锁（Lock）
+
+    通常认为：Lock提供了比synchronized方法和synchronized代码块更广泛的锁定操作，Lock更灵活的结构，有很大的差别，并且可以支持多个Condition对象
+
+    Lock是控制多个线程对共享资源进行访问的工具。通常，锁提供了对共享资源的独占访问，每次只能有一个线程对Lock对象加锁，
+
+    线程开始访问共享资源之前应先获得Lock对象。不过某些锁支持共享资源的并发访问，如：ReadWriteLock（读写锁），在线程安全控制中，
+
+    通常使用ReentrantLock（可重入锁）。使用该Lock对象可以显示加锁、释放锁。
+
+
+
+    class C {
+
+        //锁对象
+
+        private final ReentrantLock lock = new ReentrantLock();
+
+        ......
+
+        //保证线程安全方法
+
+        public void method() {
+
+            //上锁
+
+            lock.lock();
+
+            try {
+
+                //保证线程安全操作代码
+
+            } catch() {
+
+
+
+            } finally {
+
+                lock.unlock();//释放锁
+
+            }
+
+        }
+
+    }
+
+    使用Lock对象进行同步时，锁定和释放锁时注意把释放锁放在finally中保证一定能够执行。
+
+
+
+    使用锁和使用同步很类似，只是使用Lock时显示的调用lock方法来同步。而使用同步方法synchronized时系统会隐式使用当前对象作为同步监视器，
+
+    同样都是“加锁->访问->释放锁”的操作模式，都可以保证只能有一个线程操作资源。
+
+    同步方法和同步代码块使用与竞争资源相关的、隐式的同步监视器，并且强制要求加锁和释放锁要出现在一个块结构中，而且获得多个锁时，
+
+    它们必须以相反的顺序释放，且必须在与所有锁被获取时相同的范围内释放所有资源。
+
+    Lock提供了同步方法和同步代码库没有的其他功能，包括用于非块结构的tryLock方法，已经试图获取可中断锁lockInterruptibly()方法，
+
+    还有获取超时失效锁的tryLock(long, timeUnit)方法。
+
+    ReentrantLock具有重入性，也就是说线程可以对它已经加锁的ReentrantLock再次加锁，ReentrantLock对象会维持一个计数器来追踪lock方法的嵌套调用，
+
+    线程在每次调用lock()加锁后，必须显示的调用unlock()来释放锁，所以一段被保护的代码可以调用另一个被相同锁保护的方法。
+
+
+
+    死锁
+
+    当2个线程相互等待对方是否同步监视器时就会发生死锁，JVM没有采取处理死锁的措施，这需要我们自己处理或避免死锁。
+
+    一旦死锁，整个程序既不会出现异常，也不会出现错误和提示，只是线程将处于阻塞状态，无法继续。
+
+    主线程保持对Foo的锁定，等待对Bar对象加锁，而副线程却对Bar对象保持锁定，等待对Foo加锁2条线程相互等待对方先释放锁，进入死锁状态。
+
+    由于Thread类的suspend也很容易导致死锁，所以Java不推荐使用此方法暂停线程。
+
+
+
+13、线程通信
+
+    （1）、线程的协调运行
+
+        场景：用2个线程，这2个线程分别代表存款和取款。——现在系统要求存款者和取款者不断重复的存款和取款的动作，
+
+        而且每当存款者将钱存入账户后，取款者立即取出这笔钱。不允许2次连续存款、2次连续取款。
+
+        实现上述场景需要用到Object类，提供的wait、notify和notifyAll三个方法，这3个方法并不属于Thread类。但这3个方法必须由同步监视器调用，可分为2种情况：
+
+        A、对于使用synchronized修饰的同步方法，因为该类的默认实例this就是同步监视器，所以可以在同步中直接调用这3个方法。
+
+        B、对于使用synchronized修改的同步代码块，同步监视器是synchronized后可括号中的对象，所以必须使用括号中的对象调用这3个方法
+
+        方法概述：
+
+        一、wait方法：导致当前线程进入等待，直到其他线程调用该同步监视器的notify方法或notifyAll方法来唤醒该线程。
+
+                wait方法有3中形式：无参数的wait方法，会一直等待，直到其他线程通知；带毫秒参数的wait和微妙参数的wait，
+
+                这2种形式都是等待时间到达后苏醒。调用wait方法的当前线程会释放对该对象同步监视器的锁定。
+
+        二、notify：唤醒在此同步监视器上等待的单个线程。如果所有线程都在此同步监视器上等待，则会随机选择唤醒其中一个线程。
+
+            只有当前线程放弃对该同步监视器的锁定后（用wait方法），才可以执行被唤醒的线程。
+
+        三、notifyAll：唤醒在此同步监视器上等待的所有线程。只有当前线程放弃对该同步监视器的锁定后，才能执行唤醒的线程。
+
+    （2）、条件变量控制协调
+
+        如果程序不使用synchronized关键字来保证同步，而是直接使用Lock对象来保证同步，则系统中不存在隐式的同步监视器对象，
+
+        也不能使用wait、notify、notifyAll方法来协调进程的运行。
+
+        当使用Lock对象同步，Java提供一个Condition类来保持协调，使用Condition可以让那些已经得到Lock对象却无法组合使用，
+
+        为每个对象提供了多个等待集（wait-set），这种情况下，Lock替代了同步方法和同步代码块，Condition替代同步监视器的功能。
+
+        Condition实例实质上被绑定在一个Lock对象上，要获得特定的Lock实例的Condition实例，调用Lock对象的newCondition即可。
+
+        Condition类方法介绍：
+
+        一、await：类似于隐式同步监视器上的wait方法，导致当前程序等待，直到其他线程调用Condition的signal方法和signalAll方法来唤醒该线程。
+
+            该await方法有跟多获取变体：long awaitNanos(long nanosTimeout),void awaitUninterruptibly()、awaitUntil(Date daadline)
+
+        二、signal：唤醒在此Lock对象上等待的单个线程，如果所有的线程都在该Lock对象上等待，则会选择随机唤醒其中一个线程。
+
+            只有当前线程放弃对该Lock对象的锁定后，使用await方法，才可以唤醒在执行的线程。
+
+        三、signalAll：唤醒在此Lock对象上等待的所有线程。只有当前线程放弃对该Lock对象的锁定后，才可以执行被唤醒的线程。
+
+
+
+    （3）、使用管道流
+
+        线程通信使用管道流，管道流有3种形式：
+
+        PipedInputStream、PipedOutputStream、PipedReader和PipedWriter以及Pipe.SinkChannel和Pipe.SourceChannel，
+
+        它们分别是管道流的字节流、管道字符流和新IO的管道Channel。
+
+        管道流通信基本步骤：
+
+        A、使用new操作法来创建管道输入、输出流
+
+        B、使用管道输入流、输出流的connect方法把2个输入、输出流连接起来
+
+        C、将管道输入、输出流分别传入2个线程
+
+        D、2个线程可以分别依赖各自的管道输入流、管道输出流进行通信
+
+
+
+14、线程组和未处理异常
+
+    ThreadGroup表示线程组，它可以表示一批线程进行分类管理，Java允许程序对
+
+    Java允许直接对线程组控制，对线程组控制相对于同时控制这批线程。用户创建的所有线程都属于指定的线程组。
+
+    如果程序没有值得线程属于哪个组，那这个线程就属于默认线程组。在默认情况下，子线程和创建它父线程属于同一组。
+
+    一旦某个线程加入了指定线程组之后，该线程将属于该线程组，直到该线程死亡，线程运行中途不能改变它所属的线程组。
+
+    Thread类提供一些构造设置线程所属的哪个组，具有以下方法：
+
+    A、Thread(ThreadGroup group, Runnable target):target的run方法作为线程执行体创建新线程，属于group线程组
+
+    B、Thread(ThreadGroup group, Runnalbe target, String name):target的run方法作为线程执行体创建的新线程，该线程属于group线程组，且线程名为name
+
+    C、Thread(ThreadGroup group, String name):创建新线程，新线程名为name，属于group组
+
+ 
+
+    因为中途不能改变线程所属的组，所以Thread提供ThreadGroup的setter方法，但提供了getThreadGroup方法来返回该线程所属的线程组，
+
+    getThreadGroup方法的返回值是ThreadGroup对象的表示，表示一个线程组。
+
+    ThreadGroup有2个构造形式：
+
+    A、ThreadGroup(String name):name线程组的名称
+
+    B、ThreadGroup(ThreadGroup parent, String name):指定名称、指定父线程组创建的一个新线程组
+
+ 
+
+    上面的构造都指定线程名称，也就是线程组都必须有自己的一个名称，可以通过调用ThreadGroup的getName方法得到，
+
+    但不允许中途改变名称。ThreadGroup有以下常用的方法：
+
+    A、activeCount：返回线程组活动线程数目
+
+    B、interrupt：中断此线程组中的所有线程
+
+    C、isDeamon：判断该线程是否在后台运行
+
+    D、setDeamon：把该线程组设置为后台线程组，后台线程具有一个特征，当后台线程的最后一个线程执行结束或最后一个线程被销毁，后台线程组自动销毁。
+
+    E、setMaxPriority：设置线程组最高优先级
+
+    uncaughtException(Thread t, Throwable e)该方法可以处理该线程组内的线程所抛出的未处理的异常，
+
+    Thread.UncaughtExceptionHandler是Thread类的一个内部公共静态接口，
+
+    该接口内只有一个方法：void uncaughtException(Thread t, Throwable e) 该方法中的t代表出现异常的线程，而e代表该线程抛出的异常
+
+
+
+    Thread类中提供2个方法来设置异常处理器：
+
+    A、staticsetDefaultUnaughtExceptionHandler(Thread.UncaughtExceptionHandler eh):为该线程类的所有线程实例设置默认的异常处理器
+
+    B、setUncaughtExceptionHandler(Thread.UncaughtExceptionHander eh):为指导线程实例设置异常处理器
+
+ 
+
+    ThreadGroup实现了Thread.UncaughtExceptionHandler接口，所以每个线程所属的线程组将会作为默认的异常处理器。当一个线程抛出未处理异常时，
+
+    JVM会首先查找该异常对应的异常处理器，（setUncaughtExceptionHandler设置异常处理器），如果找到该异常处理器，将调用该异常处理器处理异常。
+
+    否则，JVM将会调用该线程的所属线程组的uncaughtException处理异常，线程组处理异常流程如下：
+
+    A、如果该线程有父线程组，则调用父线程组的uncaughtException方法来处理异常
+
+    B、如果该线程实例所属的线程类有默认的异常处理器（setDefaultUnaughtExceptionHandler方法设置异常处理器），那就调用该异常处理器来处理异常信息
+
+    C、将异常调用栈的信息打印到System.err错误输出流，并结束该线程
+
+ 
+
+15、Callable和Future
+
+    Callable接口定义了一个call方法可以作为线程的执行体，但call方法比run方法更强大：
+
+    A、call方法可以有返回值
+
+    B、call方法可以申明抛出异常
+
+ 
+
+    Callable接口是JDK5后新增的接口，而且不是Runnable的子接口，所以Callable对象不能直接作为Thread的target。而且call方法还有一个返回值，
+
+    call方法不能直接调用，它作为线程的执行体被调用。那么如何接收call方法的返回值？
+
+    JDK1.5提供了Future接口来代表Callable接口里的call方法的返回值，并为Future接口提供了一个FutureTask实现类，该实现类实现Future接口，
+
+    并实现了Runnable接口—可以作为Thread的target。
+
+ 
+
+    Future接口里定义了如下几个公共方法控制他关联的Callable任务：
+
+    A、boolean cancel(Boolean mayInterruptlfRunning):试图取消该Future里关联的Callable任务
+
+    B、V get()：返回Callable任务里的call方法的返回值，调用该方法将导致线程阻塞，必须等到子线程结束才得到返回值
+
+    C、V get(long timeout, TimeUnit unit)：返回Callable任务里的call方法的返回值，该方法让程序最多阻塞timeout和unit指定的时间。
+
+        如果经过指定时间后Callable任务依然没有返回值，将会抛出TimeoutException。
+
+    D、boolean isCancelled：如果在Callable任务正常完成前被取消，则返回true。
+
+    E、boolean isDone：如果Callable任务已经完成，则返回true
+
+ 
+
+    创建、并启动有返回值的线程的步骤如下：
+
+    一、创建Callable接口的实现类，并实现call方法，该call方法的返回值，并作为线程的执行体。
+
+    二、创建Callable实现类的实例，使用FutureTask类来包装Callable对象，该FutureTask对象封装了该Callable对象的call方法的返回值
+
+    三、使用FutureTask对象作为Thread对象的target创建、并启动新线程
+
+    四、调用FutureTask对象的方法来获得子线程执行结束后的返回值
+
+
+
+posted on 2011-05-05 17:41 hoojo 阅读(...) 评论(...) 编辑收藏
+刷新评论刷新页面返回顶部
+
+Powered by: 博客园模板提供：沪江博客 Copyright ©2018 hoojo

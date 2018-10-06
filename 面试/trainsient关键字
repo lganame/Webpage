@@ -1,0 +1,436 @@
+[]
+
+原
+
+transient关键字详解
+
+2016年09月18日 11:29:45 zhang111111ZHANG 阅读数：9972 标签： java
+个人分类： java
+
+1，transient的用途及使用方法
+
+1，用途
+
+　　我们知道，当一个对象实现了Serilizable接口，这个对象就可以被序列化，我们不关
+心其内在的原理，只需要了解这个类实现了Serilizable接口，这个类的所有属性和方法都
+会自动序列化。而在开发过程中，我们可能要求：当对象被序列化时（写入字节序列到目
+标文件）时，有些属性需要序列化，而其他属性不需要被序列化，打个比方，如果一个用
+户有一些敏感信息（如密码，银行卡号等），为了安全起见，不希望在网络操作（主要涉
+及到序列化操作，本地序列化缓存也适用）中被传输，这些信息对应的变量就可以加上
+transient关键字。换句话说，这个字段的生命周期仅存于调用者的内存中而不会写到磁盘
+里持久化。
+　所以，transient的用途在于：阻止实例中那些用此关键字声明的变量持久化；当对象被
+反序列化时（从源文件读取字节序列进行重构），这样的实例变量值不会被持久化和恢复
+。例如，当反序列化对象——数据流（例如，文件）可能不存在时，原因是你的对象中存在
+类型为java.io.InputStream的变量，序列化时这些变量引用的输入流无法被打开。
+
+2，使用方法
+
+序列化的时候，将不需要序列化的属性前添加关键字transient即可。
+示例：
+
+package newDay.day13;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
+class UserInfo implements Serializable {
+    private static final long serialVersionUID = 996890129747019948L;
+    private String name;
+    private transient String psw;
+
+    public UserInfo(String name, String psw) {
+        this.name = name;
+        this.psw = psw;
+    }
+
+    public String toString() {
+        return "name=" + name + ", psw=" + psw;
+    }
+}
+public class TestTransient {
+    public static void main(String[] args) {
+        UserInfo userInfo = new UserInfo("张三", "123456");
+        System.out.println(userInfo);
+        try {
+            // 序列化，被设置为transient的属性没有被序列化  
+            ObjectOutputStream o = new ObjectOutputStream(new FileOutputStream("UserInfo.txt"));
+            o.writeObject(userInfo);
+            o.close();
+        } catch (Exception e) {
+            // TODO: handle exception  
+            e.printStackTrace();
+        }
+        try {
+            // 重新读取内容  
+            ObjectInputStream in = new ObjectInputStream(new FileInputStream("UserInfo.txt"));
+            UserInfo readUserInfo = (UserInfo) in.readObject();
+            //读取后psw的内容为null  
+            System.out.println(readUserInfo.toString());
+        } catch (Exception e) {
+            // TODO: handle exception  
+            e.printStackTrace();
+        }
+    }
+}
+
+运行结果：
+
+name=张三, psw=123456
+name=张三, psw=null
+
+　　密码字段为null，说明被标记为transient的属性在对象被序列化的时候不会被保存。
+
+使用小结：
+
+　　1，一旦变量被transient修饰，变量将不再是对象持久化的一部分，该变量内容在序
+列化后无法获得访问。
+　　2，transient关键字只能修饰变量，而不能修饰方法和类。注意，本地变量是不能被
+transient关键字修饰的。变量如果是用户自定义类变量，则该类需要实现Serializable接
+口。
+　　3，被transient关键字修饰的变量不再能被序列化，一个静态变量不管是否被
+transient修饰，均不能被序列化。
+　　对于第三点，加上static之后，依然能把姓名输出。这是因为：反序列化后类中
+static型变量name的值为当前JVM中对应static变量的值，这个值是JVM中的不是反序列化
+得出的。下例可说明，其值时JVM中得到的而不是反序列化得到的：
+
+package newDay.day13;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
+class UserInfo implements Serializable {
+    private static final long serialVersionUID = 996890129747019948L;
+    private static String name;
+    private transient String psw;
+
+    public UserInfo(String name, String psw) {
+        this.name = name;
+        this.psw = psw;
+    }
+
+    public static String getName() {
+        return name;
+    }
+
+    public static void setName(String name) {
+        UserInfo.name = name;
+    }
+
+    public String getPsw() {
+        return psw;
+    }
+
+    public void setPsw(String psw) {
+        this.psw = psw;
+    }
+
+    public String toString() {
+        return "name=" + name + ", psw=" + psw;
+    }
+}
+public class TestTransient {
+    public static void main(String[] args) {
+        UserInfo userInfo = new UserInfo("张三", "123456");
+        System.out.println(userInfo);
+        try {
+            // 序列化，被设置为transient的属性没有被序列化  
+            ObjectOutputStream o = new ObjectOutputStream(new FileOutputStream("UserInfo.txt"));
+            o.writeObject(userInfo);
+            o.close();
+        } catch (Exception e) {
+            // TODO: handle exception  
+            e.printStackTrace();
+        }
+        try {
+            //在反序列化之前改变name的值
+            userInfo.setName("hello");
+            // 重新读取内容  
+            ObjectInputStream in = new ObjectInputStream(new FileInputStream("UserInfo.txt"));
+            UserInfo readUserInfo = (UserInfo) in.readObject();
+            //读取后psw的内容为null  
+            System.out.println(readUserInfo.toString());
+        } catch (Exception e) {
+            // TODO: handle exception  
+            e.printStackTrace();
+        }
+    }
+}
+
+运行结果：
+
+name=张三, psw=123456
+name=hello, psw=null
+
+这说明反序列化后类中static型变量name的值为当前JVM中对应static变量的值，为修改后
+hello，而不是序列化时的值“张三”
+
+阅读更多登录后自动展开
+想对作者说点什么？我来说一句
+ 
+
+@transient 注解注解，什么意思？
+
+Ideality_hunter Ideality_hunter
+
+11-25 4万
+
+该注解，是Hibernate等框架的注解。  实体类中使用了@Table注解后，想要添加表中不存
+在字段，就要使用@Transient这个注解了。在网上找的方法是要将这个注解添加到自定义
+字段的get方...
+
+ 
+
+transient关键字
+
+wohyd wohyd
+
+02-08 1095
+
+一、transient关键字的作用 1、为了数据安全，避免序列化和反序列化。解释：当对象被
+序列化时，被transient关键字修饰的变量不会被序列化到目标文件；当对象从序列化文件
+重构对象时（反序...
+
+ 
+
+@Transient使用心得
+
+OrangQceee OrangQceee
+
+05-25 543
+
+@Transient的作用是指定该属性或字段不是永久的。它用于注释实体类，映射超类或可嵌
+入类的属性或字段。它既可以写在属性的上面，也可以写在属性get方法的上面。在实际的
+使用过程中，如果属性...
+
+ 
+
+@Transient
+
+sinat_29581293 sinat_29581293
+
+07-02 1.3万
+
+java 的transient关键字的作用是需要实现Serilizable接口，将不需要序列化的属性前添
+加关键字transient，序列化对象的时候，这个属性就不会序列化到指定的目的地中。
+tran...
+
+ 
+
+@Transient注解的使用
+
+kingtracy8 kingtracy8
+
+11-12 5920
+
+这个注解在之前公司的培训上就使用过，但是那时候用的是公司的一个框架，也不知道到
+底在我自己搭的框架上好使不好使，今天在做毕业设计的时候正好遇到这个需求，我的表
+里只有另一张表的主键，但是用户关心的并不是他...
+
+ 
+
+关于Transient关键字的使用
+
+scruffybear scruffybear
+
+12-03 1.9万
+
+ author: scruffybear release time: 1/11/2006company: Watchdata  如有转载，请注
+明出处，并保持文章的完整性，谢谢！    java的ser...
+
+ 
+
+java transient关键字作用，使用场景。
+
+hushaoxi hushaoxi
+
+08-31 4583
+
+transient的作用及使用方法，官方解释为： Variables may be marked transient to
+indicate that they are not part of t...
+
+ 
+
+java transient简介
+
+zxl315 zxl315
+
+03-09 4.2万
+
+ 我们都知道一个对象只要实现了Serilizable接口，这个对象就可以被序列化，java的这
+种序列化模式为开发者提供了很多便利，我们可以不必关系具体序列化的过程，只要这个
+类实现了Serilizabl...
+
+ 
+
+关于transient
+
+gexiaochuan122 gexiaochuan122
+
+06-21 434
+
+关于transienttransient由来http://www.cnblogs.com/lanxuezaipiao/p/3369962.html
+private transient Logger ...
+
+ 
+
+transient
+
+liu254346742 liu254346742
+
+07-13 16
+
+transient变量的值，不会被serialization序列化，反序列化后为null
+
+文章热词
+
+java word打开 java 模板+参数 java收集控制台一行 java代码抽奖 java 对象动态堆
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+个人资料
+
+[3_u0132078]
+
+zhang111111ZHANG
+
+关注
+
+原创
+    7
+
+粉丝
+    2
+
+喜欢
+    12
+
+评论
+    5
+
+等级：
+     
+
+访问：
+    3万+
+
+积分：
+    414
+
+排名：
+    13万+
+
+勋章：
+
+持之以恒
+
+授予每个自然月内发布4篇或4篇以上原创或翻译IT博文的用户。不积跬步无以至千里，不
+积小流无以成江海，程序人生的精彩需要坚持不懈地积累！
+
+最新文章
+
+  • tomcat没有正常启动的原因
+  • Log4j使用教程
+  • Linux ntpdate同步网络时间
+  • Java集合---ArrayList的实现原理
+  • java集合---hashMap
+
+个人分类
+
+  • 数据结构和算法 3篇
+  • 数据库学习 2篇
+  • javascript 1篇
+  • 设计模式 2篇
+  • java 10篇
+  • linux 2篇
+  • javaEE 4篇
+  • git 2篇
+
+展开
+
+归档
+
+  • 2016年11月 2篇
+  • 2016年9月 7篇
+  • 2016年7月 5篇
+  • 2016年6月 1篇
+  • 2016年2月 2篇
+  • 2015年8月 1篇
+  • 2015年7月 2篇
+  • 2014年12月 4篇
+
+展开
+
+热门文章
+
+  • transient关键字详解
+
+    阅读量：9786
+
+  • Linux ntpdate同步网络时间
+
+    阅读量：5237
+
+  • tomcat没有正常启动的原因
+
+    阅读量：4680
+
+  • start service失败的问题解决
+
+    阅读量：4356
+
+  • Java中创建对象的5种不同方法
+
+    阅读量：1329
+
+最新评论
+
+  • transient关键字详解
+
+    Fury97：学到了
+
+  • transient关键字详解
+
+    qq_36230964：老哥稳
+
+  • transient关键字详解
+
+    Monkey_D_Jie：谢谢博主的解疑
+
+  • transient关键字详解
+
+    weixin_36910300：谢谢
+
+  • 二分法经典题目
+
+    u013207877：自己做自己的观众
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    13
+   
+  • 评论
+
+    4
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

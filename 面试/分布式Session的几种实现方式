@@ -1,0 +1,503 @@
+[]
+
+转
+
+分布式Session的几种实现方式
+
+2016年06月26日 20:38:17 麦田里守望者_ 阅读数：30384
+个人分类： Web
+
+一。分布式Session的几种实现方式
+
+1.基于数据库的Session共享
+
+2.基于NFS共享文件系统
+3.基于memcached 的session，如何保证 memcached 本身的高可用性？
+4. 基于resin/tomcat web容器本身的session复制机制
+5. 基于TT/Redis 或 jbosscache 进行 session 共享。
+
+6. 基于cookie 进行session共享
+
+或者是：
+
+一、Session Replication 方式管理 (即session复制)
+
+        简介：将一台机器上的Session数据广播复制到集群中其余机器上
+
+        使用场景：机器较少，网络流量较小
+
+        优点：实现简单、配置较少、当网络中有机器Down掉时不影响用户访问
+
+        缺点：广播式复制到其余机器有一定廷时，带来一定网络开销
+
+
+二、Session Sticky 方式管理
+
+        简介：即粘性Session、当用户访问集群中某台机器后，强制指定后续所有请求均
+落到此机器上
+
+        使用场景：机器数适中、对稳定性要求不是非常苛刻
+
+        优点：实现简单、配置方便、没有额外网络开销
+
+        缺点：网络中有机器Down掉时、用户Session会丢失、容易造成单点故障
+
+
+三、缓存集中式管理
+
+       简介：将Session存入分布式缓存集群中的某台机器上，当用户访问不同节点时先
+从缓存中拿Session信息
+
+       使用场景：集群中机器数多、网络环境复杂
+
+       优点：可靠性好
+
+       缺点：实现复杂、稳定性依赖于缓存的稳定性、Session信息放入缓存时要有合理
+的策略写入
+
+
+二。Session和Cookie的区别和联系以及Session的实现原理
+
+ 1、session保存在服务器，客户端不知道其中的信息；cookie保存在客户端，服务器能够
+知道其中的信息。   
+    
+  2、session中保存的是对象，cookie中保存的是字符串。   
+    
+  3、session不能区分路径，同一个用户在访问一个网站期间，所有的session在任何一个
+地方都可以访问到。而cookie中如果设置了路径参数，那么同一个网站中不同路径下的
+cookie互相是访问不到的。   
+    
+  4、session需要借助cookie才能正常<nobr oncontextmenu="return false;"
+onmousemove="kwM(3);" id="key3" onmouseover="kwE(event,3, this);" style="COLOR:
+#6600ff; BORDER-BOTTOM: 0px dotted; BACKGROUND-COLOR: transparent;
+TEXT-DECORATION: underline" onclick="return kwC();" onmouseout="kwL(event,
+this);" target="_blank">工作</nobr>。如果客户端完全禁止cookie，session将失效。
+
+             http是无状态的协议，客户每次读取web页面时，服务器都打开新的会话，
+而且服务器也不会自动维护客户的上下文信息，那么要怎么才能实现网上商店中的购物车
+呢，session就是一种保存上下文信息的机制，它是针对每一个用户的，变量的值保存在服
+务器端，通过SessionID来区分不同的客户,session是以cookie或URL重写为基础的，默认
+使用cookie来实现，系统会创造一个名为JSESSIONID的输出cookie，我们叫做session
+cookie,以区别persistent cookies,也就是我们通常所说的cookie,注意session cookie是
+存储于浏览器内存中的，并不是写到硬盘上的，这也就是我们刚才看到的JSESSIONID，我
+们通常情是看不到JSESSIONID的，但是当我们把浏览器的cookie禁止后，web服务器会采用
+URL重写的方式传递Sessionid，我们就可以在地址栏看到 sessionid=KWJHUG6JJM65HS2K6
+之类的字符串。
+             明白了原理，我们就可以很容易的分辨出persistent cookies和session
+cookie的区别了，网上那些关于两者安全性的讨论也就一目了然了，session cookie针对
+某一次会话而言，会话结束session cookie也就随着消失了，而persistent cookie只是存
+在于客户端硬盘上的一段文本（通常是加密的），而且可能会遭到cookie欺骗以及针对
+cookie的跨站脚本攻击，自然不如 session cookie安全了。
+             通常session cookie是不能跨窗口使用的，当你新开了一个浏览器窗口进入
+相同页面时，系统会赋予你一个新的sessionid，这样我们信息共享的目的就达不到了，此
+时我们可以先把sessionid保存在persistent cookie中，然后在新窗口中读出来，就可以
+得到上一个窗口SessionID了，这样通过session cookie和persistent cookie的结合我们
+就实现了跨窗口的session tracking（会话跟踪）。
+            在一些web开发的书中，往往只是简单的把Session和cookie作为两种并列的
+http传送信息的方式，session cookies位于服务器端，persistent cookie位于客户端，
+可是session又是以cookie为基础的，明白的两者之间的联系和区别，我们就不难选择合适
+的技术来开发web service了。
+
+总之：
+
+一、cookie机制和session机制的区别
+　　具体来说cookie机制采用的是在客户端保持状态的方案，而session机制采用的是在服
+务器端保持状态的方案。
+　　同时我们也看到，由于在服务器端保持状态的方案在客户端也需要保存一个标识，所
+以session机制可能需要借助于cookie机制来达到保存标识的目的，但实际上还有其他选择
+。
+二、会话cookie和持久cookie的区别
+　　如果不设置过期时间，则表示这个cookie生命周期为浏览器会话期间，只要关闭浏览
+器窗口，cookie就消失了。这种生命期为浏览会话期的cookie被称为会话cookie。会话
+cookie一般不保存在硬盘上而是保存在内存里。
+　　如果设置了过期时间，浏览器就会把cookie保存到硬盘上，关闭后再次打开浏览器，
+这些cookie依然有效直到超过设定的过期时间。
+　　存储在硬盘上的cookie可以在不同的浏览器进程间共享，比如两个IE窗口。而对于保
+存在内存的cookie，不同的浏览器有不同的处理方式。
+三、如何利用实现自动登录
+　　当用户在某个网站注册后，就会收到一个惟一用户ID的cookie。客户后来重新连接时
+，这个用户ID会自动返回，服务器对它进行检查，确定它是否为注册用户且选择了自动登
+录，从而使用户无需给出明确的用户名和密码，就可以访问服务器上的资源。
+四、如何根据用户的爱好定制站点
+　　网站可以使用cookie记录用户的意愿。对于简单的设置，网站可以直接将页面的设置
+存储在cookie中完成定制。然而对于更复杂的定制，网站只需仅将一个惟一的标识符发送
+给用户，由服务器端的数据库存储每个标识符对应的页面设置。
+五、cookie的发送
+1.创建Cookie对象
+2.设置最大时效
+3.将Cookie放入到HTTP响应报头
+　　如果你创建了一个cookie，并将他发送到浏览器，默认情况下它是一个会话级别的
+cookie:存储在浏览器的内存中，用户退出浏览器之后被删除。如果你希望浏览器将该
+cookie存储在磁盘上，则需要使用maxAge，并给出一个以秒为单位的时间。将最大时效设
+为0则是命令浏览器删除该 cookie。
+　　发送cookie需要使用HttpServletResponse的addCookie方法，将cookie插入到一个
+Set-Cookie HTTP请求报头中。由于这个方法并不修改任何之前指定的Set-Cookie报头，而
+是创建新的报头，因此我们将这个方法称为是addCookie，而非setCookie。同样要记住响
+应报头必须在任何文档内容发送到客户端之前设置。
+六、cookie的读取
+1.调用request.getCookie
+　　要获取有浏览器发送来的cookie，需要调用HttpServletRequest的getCookies方法，
+这个调用返回Cookie对象的数组，对应由HTTP请求中Cookie报头输入的值。
+2.对数组进行循环，调用每个cookie的getName方法，直到找到感兴趣的cookie为止
+　　cookie与你的主机(域)相关，而非你的servlet或JSP页面。因而，尽管你的servlet可
+能只发送了单个cookie，你也可能会得到许多不相关的cookie。
+例如：
+　　String cookieName = “userID”;
+Cookie cookies［］ = request.getCookies();
+if (cookies!=null){
+for(int i=0;i
+ Cookie cookie = cookies［i］;
+if (cookieName.equals(cookie.getName())){
+doSomethingWith(cookie.getValue());
+}
+}
+}
+七、如何使用cookie检测初访者
+A.调用HttpServletRequest.getCookies()获取Cookie数组
+B.在循环中检索指定名字的cookie是否存在以及对应的值是否正确
+C.如果是则退出循环并设置区别标识
+D.根据区别标识判断用户是否为初访者从而进行不同的操作
+八、使用cookie检测初访者的常见错误
+　　不能仅仅因为cookie数组中不存在在特定的数据项就认为用户是个初访者。如果
+cookie数组为null，客户可能是一个初访者，也可能是由于用户将cookie删除或禁用造成
+的结果。
+　　但是，如果数组非null,也不过是显示客户曾经到过你的网站或域，并不能说明他们曾
+经访问过你的servlet。其它servlet、JSP页面以及非Java Web应用都可以设置cookie，依
+据路径的设置，其中的任何cookie都有可能返回给用户的浏览器。
+　　正确的做法是判断cookie数组是否为空且是否存在指定的Cookie对象且值正确。
+九、使用cookie属性的注意问题
+　　属性是从服务器发送到浏览器的报头的一部分；但它们不属于由浏览器返回给服务器
+的报头。　
+　　因此除了名称和值之外，cookie属性只适用于从服务器输出到客户端的cookie；服务
+器端来自于浏览器的cookie并没有设置这些属性。　
+　　因而不要期望通过request.getCookies得到的cookie中可以使用这个属性。这意味着
+，你不能仅仅通过设置cookie的最大时效，发出它，在随后的输入数组中查找适当的
+cookie,读取它的值，修改它并将它存回Cookie，从而实现不断改变的cookie值。
+十、如何使用cookie记录各个用户的访问计数
+1.获取cookie数组中专门用于统计用户访问次数的cookie的值
+2.将值转换成int型
+3.将值加1并用原来的名称重新创建一个Cookie对象
+4.重新设置最大时效
+5.将新的cookie输出
+十一、session在不同环境下的不同含义
+　　session，中文经常翻译为会话，其本来的含义是指有始有终的一系列动作/消息，比
+如打电话是从拿起电话拨号到挂断电话这中间的一系列过程可以称之为一个session。
+　　然而当session一词与网络协议相关联时，它又往往隐含了“面向连接”和/或“保持状态
+”这样两个含义。
+　　session在Web开发环境下的语义又有了新的扩展，它的含义是指一类用来在客户端与
+服务器端之间保持状态的解决方案。有时候Session也用来指这种解决方案的存储结构。
+十二、session的机制
+　　session机制是一种服务器端的机制，服务器使用一种类似于散列表的结构(也可能就
+是使用散列表)来保存信息。
+　　但程序需要为某个客户端的请求创建一个session的时候，服务器首先检查这个客户端
+的请求里是否包含了一个session标识－称为session id,如果已经包含一个session id则
+说明以前已经为此客户创建过session，服务器就按照session id把这个session检索出来
+使用(如果检索不到，可能会新建一个，这种情况可能出现在服务端已经删除了该用户对应
+的session对象，但用户人为地在请求的URL后面附加上一个JSESSION的参数)。
+　　如果客户请求不包含session id，则为此客户创建一个session并且生成一个与此
+session相关联的session id，这个session id将在本次响应中返回给客户端保存。
+十三、保存session id的几种方式
+A．保存session id的方式可以采用cookie，这样在交互过程中浏览器可以自动的按照规则
+把这个标识发送给服务器。
+B．由于cookie可以被人为的禁止，必须有其它的机制以便在cookie被禁止时仍然能够把
+session id传递回服务器，经常采用的一种技术叫做URL重写，就是把session id附加在
+URL路径的后面，附加的方式也有两种，一种是作为URL路径的附加信息，另一种是作为查
+询字符串附加在URL后面。网络在整个交互过程中始终保持状态，就必须在每个客户端可能
+请求的路径后面都包含这个session id。
+C．另一种技术叫做表单隐藏字段。就是服务器会自动修改表单，添加一个隐藏字段，以便
+在表单提交时能够把session id传递回服务器。
+十四、session什么时候被创建
+　　一个常见的错误是以为session在有客户端访问时就被创建，然而事实是直到某server
+端程序(如Servlet)调用HttpServletRequest.getSession(true)这样的语句时才会被创建
+。
+十五、session何时被删除
+session在下列情况下被删除：
+A．程序调用HttpSession.invalidate()
+B．距离上一次收到客户端发送的session id时间间隔超过了session的最大有效时间
+C．服务器进程被停止
+　　再次注意关闭浏览器只会使存储在客户端浏览器内存中的session cookie失效，不会
+使服务器端的session对象失效。
+阅读更多登录后自动展开
+想对作者说点什么？我来说一句
+ 
+
+分布式session的解决方案
+
+lvdeqing lvdeqing
+
+07-02 406
+
+分布式session的解决方案集群、微服务架构中使用session的方式无非几种：分布式：利
+用存储 - 伪分布式：利用会话黏滞（session stickly，又称session绑定），...
+
+ 
+
+分布式Session的主流实现方式和优缺点
+
+w05980598 w05980598
+
+02-26 769
+
+一、常见的分布式session实现方式有以下几种1. 基于数据库的Session共享2. 基于NFS共
+享文件系统3. 基于memcached 的session4. 基于resin/tomcat web...
+
+ 
+
+分布式Session原理，最简单而高效的实现方式
+
+collonn collonn
+
+09-29 8109
+
+分布式Session原理
+
+ 
+
+分布式集群系统下的高可用session解决方案
+
+zhaifengmin zhaifengmin
+
+09-06 2331
+
+http://blog.csdn.net/lishehe/article/details/45223477   目前，为了使web能适应大
+规模的访问,需要实现应用的集群部署. 而实现集群部署...
+
+ 
+
+集群/分布式环境下5种session处理策略
+
+woaigaolaoshi woaigaolaoshi
+
+03-16 2.1万
+
+转载自：http://blog.csdn.net/u010028869/article/details/50773174?ref=myread前言
+在搭建完集群环境后，不得不考虑的一个问题就是用户访问产...
+
+ 
+
+关于分布式Session 的几种实现方式
+
+zhousenshan zhousenshan
+
+04-22 101
+
+分布式Session的几种实现方式1.基于数据库的Session共享2.基于NFS共享文件系统3.基于
+memcached 的session，如何保证 memcached 本身的高可用性？4. 基于re...
+
+ 
+
+分布式环境中三种Session管理方法的使用场景及优缺点
+
+shixing_11 shixing_11
+
+02-08 9455
+
+在分布式环境，管理Session通常使用下面三种方式：一、Session Replication 方式管理
+(即session复制)         简介：将一台机器上的Session数...
+
+ 
+
+分布式环境下session的存储的几个解决方案
+
+yuanfen860913 yuanfen860913
+
+03-14 1122
+
+分布式环境下session的存储的几个解决方案企业级应用系统很少是部署在单台服务器上的
+，这样就带来了跨服务器如何进行session共享的问题，笔者提供了两种方案，分别适用于
+两种不同场合，持久化se...
+
+ 
+
+分布式session的几种实现方式
+
+u011213044 u011213044
+
+05-31 86
+
+在搭建完集群环境后，不得不考虑的一个问题就是用户访问产生的session如何处理。如果
+不做任何处理的话，用户将出现频繁登录的现象，比如集群中存在A、B两台服务器，用户
+在第一次访问网站时，Nginx通过...
+
+ 
+
+一种分布式session实现方案
+
+hounanjsj hounanjsj
+
+02-21 2123
+
+当服务器的访问压力达到一定程度时，会采用分布式部署方案，即分布式集群部署，多个
+服务节点都可以提供同样的服务能力，这样，当大量的http请求到达服务端时，由负载均
+衡算法，将不同的请求相对均匀地分发到不同...
+
+相关热词
+
+mxnet分布式 jwt分布式 egg分布式分布式开源项目分布式编程技术
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+个人资料
+
+[3_u0143520]
+
+麦田里守望者_
+
+关注
+
+原创
+    22
+
+粉丝
+    54
+
+喜欢
+    40
+
+评论
+    16
+
+等级：
+     
+
+访问：
+    13万+
+
+积分：
+    1492
+
+排名：
+    3万+
+
+最新文章
+
+  • Redis面试刁难大全
+  • 微服务架构
+  • 高并发和高可用
+  • 分布式系统的接口幂等性设计
+  • 聊聊微服务架构及分布式事务
+
+个人分类
+
+  • oracle 8篇
+  • java 84篇
+  • java设计模式 3篇
+  • Git 2篇
+  • Web 21篇
+  • Spring 10篇
+  • Android 1篇
+  • 网络 1篇
+  • Tomcat优化方案 1篇
+  • mongoDb 1篇
+  • dobbo 1篇
+  • Eclipse使用技巧及快捷键 1篇
+  • Hibernate 3篇
+  • JqueryEasyUI 2篇
+  • 面试 9篇
+
+展开
+
+归档
+
+  • 2018年8月 4篇
+  • 2018年7月 6篇
+  • 2018年4月 1篇
+  • 2018年3月 4篇
+  • 2018年1月 5篇
+  • 2017年12月 1篇
+  • 2017年9月 1篇
+  • 2017年6月 1篇
+  • 2017年4月 3篇
+  • 2017年3月 2篇
+  • 2017年2月 6篇
+  • 2017年1月 3篇
+  • 2016年12月 3篇
+  • 2016年10月 1篇
+  • 2016年9月 1篇
+  • 2016年7月 2篇
+  • 2016年6月 8篇
+  • 2016年5月 10篇
+  • 2016年4月 5篇
+  • 2016年3月 13篇
+  • 2016年2月 2篇
+  • 2016年1月 2篇
+  • 2015年12月 2篇
+  • 2015年11月 8篇
+  • 2015年10月 18篇
+  • 2015年9月 12篇
+  • 2015年8月 8篇
+  • 2015年7月 1篇
+  • 2015年3月 1篇
+  • 2015年2月 2篇
+  • 2015年1月 2篇
+
+展开
+
+热门文章
+
+  • 分布式Session的几种实现方式
+
+    阅读量：30355
+
+  • Java高级工程师常见面试题
+
+    阅读量：20437
+
+  • findbug类型
+
+    阅读量：8816
+
+  • struts2标签<s:property value=""/> ognl和el
+
+    阅读量：6705
+
+  • Oracle中insert into select和select into的区别
+
+    阅读量：4744
+
+最新评论
+
+  • Java高级面试题
+
+    qq_20408393：看一下学习学习
+
+  • fastjson转换json格式数...
+
+    jueduilindu03：十分感谢分享
+
+  • Java高级程序员面试宝典之网站架构
+
+    leeue：这个可以分享不？
+
+  • JAVA_8 HashMap原理
+
+    baidu_41669919：执行put操作时,如果元素是以链表方式存储,新加入的应该是放在链
+    尾吧？jdk7之前是放链头[cod...
+
+  • 高并发解决方案
+
+    shichuwu：分布式缓存还不太了解，需要去学习
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    12
+   
+  • 评论
+
+    1
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

@@ -1,0 +1,439 @@
+[]
+
+原
+
+Java 中几种常用的线程池
+
+2016年04月14日 23:29:01 Boo_Wang 阅读数：3156 标签： java 线程池 Executor
+个人分类： Java基础
+版权声明：本文为博主原创文章，未经博主允许不得转载。 https://blog.csdn.net/
+wbwjx/article/details/51156125
+
+概述：
+
+在java内置API中操作线程所用到的类为Thread。创建线程一般有两种方式，
+
+  • 继承Thread方式
+
+  • 实现Runnable方式，并以runnable作为target创建Thread
+
+在Android中的耗时任务一般都需要另开线程来执行，常常需要用线程池来管理这些线程，
+实现控制线程数，重用，控制执行和取消等功能。
+
+Java线程池
+
+Java提供了四种线程池
+
+newCachedThreadPool ：
+
+可缓存线程池，若线程池长度超过处理需要，则回收空线程，否则创建新线程，线程规模
+可无限大。
+
+ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
+
+当执行第二个任务时第一个任务已经完成，会复用执行第一个任务的线程，而不用每次新
+建线程。
+
+newFixedThreadPool ：
+
+定长线程池，可控制线程最大并发数，超出的线程会在队列中等待。
+
+ExecutorService fixedThreadPool = Executors.newFixedThreadPool(3);
+
+定长线程池的大小最好根据系统资源进行设置。如Runtime.getRuntime
+().availableProcessors()。
+
+newScheduledThreadPool ：
+
+定长线程池，支持定时及周期性任务执行，类似Timer。
+
+ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(5);
+
+使用实例：
+
+ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(5);
+//表示延迟1秒后每3秒执行一次。
+scheduledThreadPool.scheduleAtFixedRate(new Runnable() {
+    @Override
+    public void run() {
+        System.out.println("delay 1 seconds, and excute every 3 seconds");
+    }
+}, 1, 3, TimeUnit.SECONDS);
+
+newSingleThreadExecutor ：
+
+单线程的线程池，支持FIFO, LIFO, 优先级策略。
+
+ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
+
+通过观察源码，其中四种线程的创建都是创建一个ThreadPoolExecutor。其中
+ThreadPoolExecutor是ExecutorService接口的实现类。
+
+java.util.concurrent
+
+此包是java的并发编程包，其下定义了三个Executor接口
+
+并发类图
+
+Executor:一个运行新任务的简单接口。
+ExecutorService:扩展了Executor接口。添加了一些用来管理执行器生命周期和任务生命
+周期的方法。
+ScheduledExecutorService:扩展了ExecutorService。支持Future和定期执行任务。
+
+实现类包括：ScheduledThreadPoolExecutor、ThreadPoolExecutor。
+java中提供的四种线程池，除了ScheduledThreadPool使用的是
+ScheduledThreadPoolExecutor，其他均为ThreadPoolExecutor。
+
+ThreadPoolExecutor
+
+ThreadPoolExecutor
+
+public ThreadPoolExecutor(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit,
+                              BlockingQueue<Runnable> workQueue,
+                              ThreadFactory threadFactory,
+                              RejectedExecutionHandler handler) {}
+
+参数说明
+corePoolSize ：线程池的核心线程数。
+maximumPoolSize ：线程池所能容纳的最大线程数。
+keepAliveTime ：非核心线程闲置时的超时时长。超过该时长，非核心线程就会被回收。
+unit ：keepAliveTime的时间单位。
+workQueue ：线程池中的任务队列。
+threadFactory：线程工厂，默认值DefaultThreadFactory。
+handler ：饱和策略，当线程池中的数量大于maximumPoolSize，对拒绝任务的处理策略，
+默认值ThreadPoolExecutor.AbortPolicy()。
+
+参考：
+Java并发教程（Oracle官方资料）
+
+Trinea：Java(Android)线程池
+
+Java多线程:ThreadPoolExecutor详解
+
+并发编程网 - ifeve.com
+
+线程池ThreadPoolExecutor介绍
+
+阅读更多登录后自动展开
+想对作者说点什么？我来说一句
+ 
+
+常见的四种线程池和区别
+
+qq_34952110 qq_34952110
+
+09-25 2.7万
+
+线程池主要解决处理器单元内多个线程执行的问题，能够有效的降低频繁创建和销毁线程
+所带来的开销。下面简单的介绍一下各个的区别和用处。（1）fixThreadPool          
+我的理解这是一个...
+
+ 
+
+java线程池与五种常用线程池策略使用与解析
+
+u011479540 u011479540
+
+07-09 1.3万
+
+java线程池与四种常用线程池策略使用与解析一.线程池关于为什么要使用线程池久不赘述
+了，首先看一下java中作为线程池Executor底层实现类的ThredPoolExecutor的构造函数
+...
+
+ 
+
+java常用的几种线程池比较
+
+Mr_Smile2014 Mr_Smile2014
+
+12-02 6514
+
+一：newCachedThreadPool        (1)缓存型池子，先查看池中有没有以前建立的线程，
+如果有，就reuse，如果没有，就建立一个新的线程加入池中；         (2)缓存...
+
+ 
+
+Java几种线程池类型介绍及使用
+
+xu__cg xu__cg
+
+10-29 7169
+
+一、线程池使用场景单个任务处理时间短将需处理的任务数量大二、使用Java线程池好处
+1.使用new Thread()创建线程的弊端：每次通过new Thread()创建对象性能不佳。线程缺
+乏统...
+
+ 
+
+java中线程池的几种实现方式
+
+w2393040183 w2393040183
+
+08-11 1.7万
+
+1、线程池简介：     多线程技术主要解决处理器单元内多个线程执行的问题，它可以显
+著减少处理器单元的闲置时间，增加处理器单元的吞吐能力。         假设一个服务器完
+成一项任务所需时间为：T...
+
+ 
+
+(精)JAVA线程池原理以及几种线程池类型介绍
+
+it_man it_man
+
+01-11 3.9万
+
+在什么情况下使用线程池？     1.单个任务处理的时间比较短     2.将需处理的任务的
+数量大     使用线程池的好处:     1.减少在创建和销毁线程上所花的时间以及系统资源
+的...
+
+ 
+
+java 四种线程池的简介
+
+u013762572 u013762572
+
+08-14 4490
+
+前瞻四种线程池内部构造都是来自同一个方法：下面分别介绍一下各个参数的含义：
+corePoolSize: 线程池中所保存的核心线程数。线程池初始化启动之后，默认是空的，只
+有当任务来临之时，...
+
+ 
+
+java 线程池原理及几种线程池详解
+
+andychen314 andychen314
+
+03-15 4249
+
+java 线程池原理及几种线程池详解 1、为什么要用线程池？服务器经常出现处理大量单个
+任务处理的时间很短而请求的数目却是巨大的请求。构建服务器应用程序的一个过于简单
+的模型应该是：每当一个请求...
+
+ 
+
+多线程_线程池的几种类型
+
+zsw101259 zsw101259
+
+07-20 4318
+
+---------------------- android培训、java培训、期待与您交流！ 1、线程池：一个可
+以装入n个线程的容器，每次池子里面最多能同时运行n个任务(即n个Runn...
+
+ 
+
+五种java线程池的使用与比较
+
+lirongqian123 lirongqian123
+
+01-31 256
+
+今天对五种常见的java内置线程池进行讲解。线程使用的demo public static void cache
+() { ExecutorService pool = E...
+
+文章热词
+
+java word打开 java 模板+参数 java收集控制台一行 java代码抽奖 java 对象动态堆
+
+相关热词
+
+java‖ 与java java的～ java　 java和--
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+个人资料
+
+[3_wbwjx]
+
+Boo_Wang
+
+关注
+
+原创
+    145
+
+粉丝
+    70
+
+喜欢
+    65
+
+评论
+    68
+
+等级：
+     
+
+访问：
+    27万+
+
+积分：
+    3867
+
+排名：
+    1万+
+
+勋章：
+
+专栏达人
+
+授予成功创建个人博客专栏的用户。专栏中添加五篇以上博文即可点亮！撰写博客专栏浓
+缩技术精华，专栏达人就是你！
+
+持之以恒
+
+授予每个自然月内发布4篇或4篇以上原创或翻译IT博文的用户。不积跬步无以至千里，不
+积小流无以成江海，程序人生的精彩需要坚持不懈地积累！
+
+最新文章
+
+  • 关于TCP/IP,OSI协议模型及层结构关系
+  • 计算机时间：1970年1月1日
+  • 算法分析之桶排序
+  • HenCoder Android开发进阶系列学习笔记
+  • android 控件各种颜色的半透明效果配置
+
+博主专栏
+
+  • [120]
+
+    Java设计模式
+
+    阅读量：2770825 篇
+  • [120]
+
+    RxJava系列
+
+    阅读量：2367111 篇
+
+个人分类
+
+  • 读书笔记 30篇
+  • Android Training 2篇
+  • 自定义控件 8篇
+  • 依赖注入 4篇
+  • 数据库 1篇
+  • 图片加载 1篇
+  • 网络框架 4篇
+  • Android动画 5篇
+  • 设计模式 25篇
+  • 版本管理 1篇
+  • 性能优化 1篇
+  • 项目架构 3篇
+  • 源码分析 2篇
+  • 开发工具IDE 4篇
+  • 工具类 1篇
+  • Android基础 61篇
+  • 其他 7篇
+  • Java基础 34篇
+  • RxJava 11篇
+  • jni 2篇
+  • 开发细节相关 3篇
+  • 学习计划 1篇
+  • 算法 1篇
+  • 编程语言 1篇
+  • 计算机网络 1篇
+
+展开
+
+归档
+
+  • 2017年9月 1篇
+  • 2017年8月 1篇
+  • 2017年7月 3篇
+  • 2017年5月 1篇
+  • 2017年4月 1篇
+  • 2017年3月 2篇
+  • 2017年2月 5篇
+  • 2017年1月 18篇
+  • 2016年12月 8篇
+  • 2016年11月 1篇
+  • 2016年10月 12篇
+  • 2016年9月 8篇
+  • 2016年8月 18篇
+  • 2016年7月 1篇
+  • 2016年6月 6篇
+  • 2016年5月 6篇
+  • 2016年4月 15篇
+  • 2016年3月 3篇
+  • 2016年2月 8篇
+  • 2016年1月 14篇
+  • 2015年12月 12篇
+  • 2015年11月 2篇
+  • 2015年9月 2篇
+  • 2015年6月 1篇
+
+展开
+
+热门文章
+
+  • Retrofit2.0使用总结及注意事项
+
+    阅读量：24950
+
+  • 图片加载之Glide使用总结
+
+    阅读量：22481
+
+  • Java 并发工具箱之concurrent包
+
+    阅读量：11047
+
+  • Android DialogFragment实现底部弹出菜单效果
+
+    阅读量：10432
+
+  • Java设计模式之适配器模式
+
+    阅读量：8251
+
+最新评论
+
+  • Android长截屏-- Scro...
+
+    opassenger：[reply]jin870132[/reply] 请请问这位兄弟解决了吗，我也遇到了。。
+
+  • Android仿微博@好友,#话题...
+
+    de285620299：[reply]QQ125223097[/reply] 我也想问下这个具体是怎么处理的？再
+    就是好...
+
+  • Android 6.0适配的几个重...
+
+    whlei01：不错不错
+
+  • Android仿微博@好友,#话题...
+
+    u014618984：[reply]QQ125223097[/reply] 小白我还是懵，具体该改哪里呢？
+
+  • Android仿微博@好友,#话题...
+
+    QQ125223097：首先谢谢贴主的分享，解决了我的问题。然后，提一个bug, 一下为重
+    现步骤： 1.添加两个Rang...
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    1
+   
+  • 评论
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

@@ -1,0 +1,176 @@
+w3school 在线教程
+
+  • HTML 系列教程
+  • 浏览器脚本
+  • 服务器脚本
+  • ASP.NET 教程
+  • XML 系列教程
+  • Web Services 系列教程
+  • 建站手册
+
+SQL 基础教程
+
+  • SQL 教程
+  • SQL 简介
+  • SQL 语法
+  • SQL select
+  • SQL distinct
+  • SQL where
+  • SQL AND & OR
+  • SQL Order By
+  • SQL insert
+  • SQL update
+  • SQL delete
+
+SQL 高级教程
+
+  • SQL Top
+  • SQL Like
+  • SQL 通配符
+  • SQL In
+  • SQL Between
+  • SQL Aliases
+  • SQL Join
+  • SQL Inner Join
+  • SQL Left Join
+  • SQL Right Join
+  • SQL Full Join
+  • SQL Union
+  • SQL Select Into
+  • SQL Create DB
+  • SQL Create Table
+  • SQL Constraints
+  • SQL Not Null
+  • SQL Unique
+  • SQL Primary Key
+  • SQL Foreign Key
+  • SQL Check
+  • SQL Default
+  • SQL Create Index
+  • SQL Drop
+  • SQL Alter
+  • SQL Increment
+  • SQL View
+  • SQL Date
+  • SQL Nulls
+  • SQL isnull()
+  • SQL 数据类型
+  • SQL 服务器
+
+SQL 函数
+
+  • SQL functions
+  • SQL avg()
+  • SQL count()
+  • SQL first()
+  • SQL last()
+  • SQL max()
+  • SQL min()
+  • SQL sum()
+  • SQL Group By
+  • SQL Having
+  • SQL ucase()
+  • SQL lcase()
+  • SQL mid()
+  • SQL len()
+  • SQL round()
+  • SQL now()
+  • SQL format()
+
+SQL 总结
+
+  • SQL 快速参考
+  • SQL 教程总结
+
+SQL 测验
+
+  • SQL 测验
+
+建站手册
+
+  • 网站构建
+  • 万维网联盟 (W3C)
+  • 浏览器信息
+  • 网站品质
+  • 语义网
+  • 职业规划
+  • 网站主机
+
+关于 W3School
+
+帮助 W3School
+
+SQL LEFT JOIN 关键字
+
+  • SQL Inner Join
+  • SQL Right Join
+
+SQL LEFT JOIN 关键字
+
+LEFT JOIN 关键字会从左表 (table_name1) 那里返回所有的行，即使在右表
+(table_name2) 中没有匹配的行。
+
+LEFT JOIN 关键字语法
+
+SELECT column_name(s)
+FROM table_name1
+LEFT JOIN table_name2
+ON table_name1.column_name=table_name2.column_name
+
+注释：在某些数据库中， LEFT JOIN 称为 LEFT OUTER JOIN。
+
+原始的表 (用在例子中的)：
+
+"Persons" 表：
+
+Id_P LastName FirstName    Address       City
+1    Adams    John      Oxford Street  London
+2    Bush     George    Fifth Avenue   New York
+3    Carter   Thomas    Changan Street Beijing
+
+"Orders" 表：
+
+Id_O OrderNo  Id_P
+1    77895    3
+2    44678    3
+3    22456    1
+4    24562    1
+5    34764    65
+
+左连接（LEFT JOIN）实例
+
+现在，我们希望列出所有的人，以及他们的定购 - 如果有的话。
+
+您可以使用下面的 SELECT 语句：
+
+SELECT Persons.LastName, Persons.FirstName, Orders.OrderNo
+FROM Persons
+LEFT JOIN Orders
+ON Persons.Id_P=Orders.Id_P
+ORDER BY Persons.LastName
+
+结果集：
+
+LastName FirstName  OrderNo
+Adams    John       22456
+Adams    John       24562
+Carter   Thomas     77895
+Carter   Thomas     44678
+Bush     George      
+
+LEFT JOIN 关键字会从左表 (Persons) 那里返回所有的行，即使在右表 (Orders) 中没有
+匹配的行。
+
+  • SQL Inner Join
+  • SQL Right Join
+
+[INS::INS]
+
+SQL 测验
+
+W3School 简体中文版提供的内容仅用于培训和测试，不保证内容的正确性。通过使用本站
+内容随之而来的风险与本站无关。
+
+使用条款和隐私条款。版权所有，保留一切权利。赞助商：上海赢科投资有限公司。蒙ICP
+备06004630号
+

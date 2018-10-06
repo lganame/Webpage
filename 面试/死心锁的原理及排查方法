@@ -1,0 +1,456 @@
+[]
+
+原
+
+JVM的线程状态及如何排查死锁原因
+
+2014年05月28日 16:56:20 固市的敏敏阅读数：4501
+个人分类：技术
+
+一：线程状态：
+
+操作系统的线程状态一共有：创建，就绪，运行，阻塞，死亡。
+
+创建：生成线程对象，并未调用start()方法
+
+就绪：调用thread.start()方法之后，线程还未被线程调度程序置为当前执行线程之前。
+
+      或者线程在wait()时被notify后，或者sleep(1000)完成后。
+
+          或者调用了线程的yield()方法后
+
+运行：线程被线程调度程序置为当前执行线程
+
+阻塞：线程wait()中或者sleep()中，或者等待某个锁
+
+死亡：线程run()方法执行完毕;
+
+ 
+
+二：jvm线程堆栈中的线程状态一共有以下：
+
+1、TIMED_WAITING:出现在线程调用了wait(long)或者join(long)或sleep(long)的情况下
+
+在线程堆栈中有两种常见表示：TIMED_WAITING (on object monitor)和TIMED_WAITING
+(sleeping)
+
+2、WAITING：线程获得一个对象锁后，在该对象上等待其他线程来notify()
+
+在线程堆栈中常见表示：WAITING (on object monitor)
+
+3、BLOCKED：线程在等待临界资源被释放，比如等待另外一个线程释放临界资源
+
+在线程堆栈中常见表示：BLOCKED (on object monitor)
+
+4、RUNNABLE：当获得CPU的使用权时就可运行的线程，所以一次线程堆栈中可以有多个处
+于RUNNABLE状态的线程。该状态下，线程处于等待的原因，io,cpu时间片，而非锁，sleep
+().
+
+在线程堆栈中常见表示：
+
+java.lang.Thread.State: RUNNABLE
+
+at java.net.SocketInputStream.socketRead0(Native Method)
+
+        at java.net.SocketInputStream.read(SocketInputStream.java:129)
+
+        at java.io.BufferedInputStream.fill(BufferedInputStream.java:218)
+
+        at java.io.BufferedInputStream.read(BufferedInputStream.java:237)
+
+ 
+
+三：如何根据线程堆栈判断死锁：
+
+根据死锁的原理，死锁原因可在BLOCKED状态的线程堆栈中找到原因。
+
+如下例子：三个线程因等待不同的锁，处于BLOCKED状态，且A线程等待B线程持有的锁，B
+等待C持有的锁，而C又等待A持有的锁，造成锁的等待环，形成死锁。
+
+ 
+
+1、线程"UCA_FINTERFACE ResponseListenerThread"，已获得锁<0x2b0c5b78>和
+<0x2b0dc348>和<0x14990288>，等待获取锁<0x14990230>，处在挂起状态
+
+ 
+
+2、    线程"UCA_MAINFRAMESERVICE startupMonitor
+com.zte.ums.common.fm.wsf.mainframe.FmStartupMonitor"
+
+    已获得锁<0x14990230>等待去获取锁<0x2b0c5b08>，
+
+ 
+
+3、线程“UCA-FM:init client model”已获得锁<0x2b0c5b08>和<0x2b0c5ce0>，
+<0x2b0c5cf0>，等待锁<0x2b0c5b78>
+
+ 
+
+线程1堆栈：
+
+"UCA_FINTERFACE ResponseListenerThread" prio=10 tid=0x06438c00 nid=0x335e0
+waiting for monitor entry [0x0869f000]
+
+   java.lang.Thread.State: BLOCKED (on object monitor)
+
+  at
+com.zte.ums.common.fm.wsf.msgservice.localdispatcher.LocalAlarmListenerManager.syncAlarmsFromLocalDB
+(LocalAlarmListenerManager.java:104)
+
+        - waiting to lock <0x14990230> (a
+com.zte.ums.common.fm.wsf.msgservice.localdispatcher.LocalAlarmListenerManager)
+
+        at
+com.zte.ums.common.fm.wsf.msgservice.localdispatcher.LocalSyncManager.syncAlarms
+(LocalSyncManager.java:86)
+
+        at
+com.zte.ums.common.fm.wsf.dataprovider.AlarmDataProviderImpl.syncAlarmData
+(AlarmDataProviderImpl.java:213)
+
+        - locked <0x2b0dc348> (a
+com.zte.ums.common.fm.wsf.dataprovider.AlarmDataProviderImpl)
+
+        at
+com.zte.ums.common.fm.wsf.msgservice.AlarmListenerDecorator.syncAlarmData
+(AlarmListenerDecorator.java:144)
+
+        - locked <0x2b0c5b78> (a
+com.zte.ums.common.fm.wsf.msgservice.AlarmListenerDecorator)
+
+        at
+com.zte.ums.common.fm.wsf.msgservice.initalarmlistener.AlarmQueryFromServerRespListener.initListeners
+(AlarmQueryFromServerRespListener.java:146)
+
+        at
+com.zte.ums.common.fm.wsf.msgservice.initalarmlistener.AlarmQueryFromServerRespListener.handleQueryResoponse
+(AlarmQueryFromServerRespListener.java:131)
+
+        at
+com.zte.ums.common.fm.wsf.msgservice.initalarmlistener.AlarmQueryFromServerRespListener.onResponse
+(AlarmQueryFromServerRespListener.java:92)
+
+        - locked <0x14990288> (a
+com.zte.ums.common.fm.wsf.msgservice.initalarmlistener.AlarmQueryFromServerRespListener)
+
+        at
+com.zte.ums.uep.pfl.finterface.wsf.FServiceProxy$ResponseListenerProxy.onResponse
+(FServiceProxy.java:682)
+
+        at com.zte.ums.uep.pfl.finterface.wsf.ResponseListenerThread.run
+(ResponseListenerThread.java:165)
+
+                  
+
+线程2堆栈：
+
+         : "UCA_MAINFRAMESERVICE startupMonitor
+com.zte.ums.common.fm.wsf.mainframe.FmStartupMonitor" prio=10 tid=0x06677800
+nid=0x2ec40 waiting for monitor entry [0x07d3f000]
+
+   java.lang.Thread.State: BLOCKED (on object monitor)
+
+        at com.zte.ums.common.fm.wsf.msgservice.AlarmModel.addAlarmListener
+(AlarmModel.java:93)
+
+        - waiting to lock <0x2b0c5b08> (a
+com.zte.ums.common.fm.wsf.msgservice.AlarmModel)
+
+        at
+com.zte.ums.common.fm.wsf.misc.sound.notifyrule.AlarmNotifyRuleAudioContinusPlayer.init
+(AlarmNotifyRuleAudioContinusPlayer.java:78)
+
+        at com.zte.ums.common.fm.wsf.msgservice.AlarmNotifyRuleManager.init
+(AlarmNotifyRuleManager.java:117)
+
+        at
+com.zte.ums.common.fm.wsf.msgservice.localdispatcher.LocalAlarmListenerManager.start
+(LocalAlarmListenerManager.java:48)
+
+        - locked <0x14990230> (a
+com.zte.ums.common.fm.wsf.msgservice.localdispatcher.LocalAlarmListenerManager)
+
+        at
+com.zte.ums.common.fm.wsf.mainframe.FmStartupMonitor.initUponServerStarted
+(FmStartupMonitor.java:69)
+
+        at com.zte.ums.common.fm.wsf.mainframe.FmStartupMonitor.startedup
+(FmStartupMonitor.java:43)
+
+        at com.zte.ums.uep.pfl.mainframe.main.control.WorkFlow$8$1$1.run
+(WorkFlow.java:1226)
+
+        at java.lang.Thread.run(Thread.java:661)
+
+线程3堆栈
+
+"UCA-FM:init client model" prio=10 tid=0x065ed400 nid=0x3265c waiting for
+monitor entry [0x0793f000]
+
+   java.lang.Thread.State: BLOCKED (on object monitor)
+
+        at com.zte.ums.common.fm.wsf.msgservice.AlarmListenerDecorator.stop
+(AlarmListenerDecorator.java:91)
+
+        - waiting to lock <0x2b0c5b78> (a
+com.zte.ums.common.fm.wsf.msgservice.AlarmListenerDecorator)
+
+        at
+com.zte.ums.common.fm.wsf.msgservice.AlarmEventDispatcher.removeAllListener
+(AlarmEventDispatcher.java:169)
+
+        - locked <0x2b0c5cf0> (a java.util.ArrayList)
+
+        at com.zte.ums.common.fm.wsf.msgservice.AlarmEventDispatcher.stop
+(AlarmEventDispatcher.java:109)
+
+        - locked <0x2b0c5ce0> (a
+com.zte.ums.common.fm.wsf.msgservice.AlarmEventDispatcher)
+
+        at com.zte.ums.common.fm.wsf.msgservice.AlarmModel.stop
+(AlarmModel.java:75)
+
+        - locked <0x2b0c5b08> (a
+com.zte.ums.common.fm.wsf.msgservice.AlarmModel)
+
+        at com.zte.ums.common.fm.wsf.msgservice.AlarmModel.syncAlarms
+(AlarmModel.java:170)
+
+        - locked <0x2b0c5b08> (a
+com.zte.ums.common.fm.wsf.msgservice.AlarmModel)
+
+        at com.zte.ums.common.fm.wsf.msgservice.SyncAlarmManager.syncAlarms
+(SyncAlarmManager.java:112)
+
+        at com.zte.ums.common.fm.wsf.misc.AlarmModelUpdateManager$1.run
+(AlarmModelUpdateManager.java:55)
+
+        at java.lang.Thread.run(Thread.java:661)
+
+ 
+
+阅读更多登录后自动展开
+ 
+
+java线程阻塞问题排查方法
+
+我开发的worker，每隔几个月线上都会阻塞一次，一直都没查出问题。今天终于了了这个
+心结。把解决过程总结下和大家分享。     首先用jstack命令打出这个进程的全部线程堆
+栈。拿到线程dump文件之...
+想对作者说点什么？我来说一句
+ 
+
+分析Java虚拟机死锁(转帖)
+
+cafecheng cafecheng
+
+04-29 1909
+
+分析Java虚拟机死锁我发现现在网上没有好好讲这个的，少数的几篇文章都是大谈自己的
+工具，却没把方法讲清楚。我决定以我以前碰到的case为例写一篇来分享。到目前为止，
+我认为分析Java代码问题的最有效的...
+
+ 
+
+又一次Java线程卡死的调试经历
+
+u011734144 u011734144
+
+03-15 1.2万
+
+我的java代码，每天凌晨1点都会执行一个定时任务，定时任务中有循环执行的任务，每次
+循环都有开始和结束日志，某一天，我忽然发现，日志中前一天的循环只执行了几次就停
+止了，根据日志来看，执行到第4次循环的...
+
+ 
+
+jvm 内存dump、gc查看、线程死锁，jmap、jstack、jstat
+
+u013851082 u013851082
+
+12-15 9996
+
+1. jstat      这个命令对于查看Jvm的堆栈信息很有用。能够查看
+eden,survivor,old,perm等heap的capacity,utility信息     对于查看系...
+
+ 
+
+java查看线程死锁
+
+huaweitman huaweitman
+
+12-21 573
+
+那我们怎么确定一定是死锁呢？有两种方法。　　1>使用JDK给我们的的工具JConsole，可
+以通过打开cmd然后输入jconsole打开。　　　　1)连接到需要查看的进程。 2）打开线
+程...
+
+ 
+
+Jstack线程状态BLOCKED/TIMED_WAITING/WAITING解释
+
+xionghan01 xionghan01
+
+10-17 1.3万
+
+一、线程5种状态新建状态（New）新创建了一个线程对象。就绪状态（Runnable）线程对
+象创建后，其他线程调用了该对象的start()方法。该状态的线程位于可运行线程池中，变
+得可运行，等待获...
+
+ 
+
+【JVM性能调优】jstack和线程dump分析
+
+lmb55 lmb55
+
+02-22 526
+
+一、几个概念： 1、jstack命令的语法格式：jstack &amp;lt;pid&amp;gt;，可用于查看
+java进程id。 2、Dump文件：Dump文件是进程的内存镜像。可以把程...
+
+ 
+
+Java多线程:线程状态
+
+huang_xw huang_xw
+
+03-04 4.7万
+
+一. 线程状态类型 1. 新建状态（New）：新创建了一个线程对象。 2. 就绪状态（
+Runnable）：线程对象创建后，其他线程调用了该对象的start()方法。该状态的线程位于
+可运行线程池中，...
+
+ 
+
+一次线上OOM过程的排查
+
+qq_16681169 qq_16681169
+
+11-23 2002
+
+一.出现问题在前一段时间日常环境很不稳定，前端调用mtop接口会出网络异常或服务不存
+在的异常。查询了服务器上的HSF会有偶尔挂死的情况，服务器上的接口服务都不可用。于
+是我们对服务器上的状况进行了排查。...
+
+ 
+
+java处理线程阻塞的小技巧
+
+qq_20641565 qq_20641565
+
+11-29 1900
+
+在java中我们使用多线程去处理一些业务，如果业务比较复杂且当并发量有挺大的时候，
+很有可能出现线程阻塞的问题。案例：有一个触发接口，根据触发的信息内部开启多个线
+程去执行业务，每个线程都会去执行两种...
+
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+个人资料
+
+[3_u0144846]
+
+固市的敏敏
+
+关注
+
+原创
+    8
+
+粉丝
+    1
+
+喜欢
+    0
+
+评论
+    3
+
+等级：
+     
+
+访问：
+    9470
+
+积分：
+    176
+
+排名：
+    106万+
+
+最新文章
+
+  • mysql中使用cursor，loop,handler逐个删除表
+  • 如何打印内存堆栈及如何在eclipse中查看内存堆栈
+  • java中的hashcode()与equals()
+  • 自我管理与敏捷软件开发
+  • Thread.sleep(long time)和yield()
+
+个人分类
+
+  • 技术 3篇
+
+归档
+
+  • 2014年7月 2篇
+  • 2014年5月 3篇
+  • 2014年4月 3篇
+
+热门文章
+
+  • JVM的线程状态及如何排查死锁原因
+
+    阅读量：4496
+
+  • 如何打印内存堆栈及如何在eclipse中查看内存堆栈
+
+    阅读量：1847
+
+  • 自我管理与敏捷软件开发
+
+    阅读量：544
+
+  • java序列化的版本管理
+
+    阅读量：539
+
+  • mysql中使用cursor，loop,handler逐个删除表
+
+    阅读量：499
+
+最新评论
+
+  • 如何打印内存堆栈及如何在eclip...
+
+    QAQ_XJX：已经五年了
+
+  • 如何打印内存堆栈及如何在eclip...
+
+    Gaeaswomb：楼主，你有点搞笑
+
+  • mysql中使用cursor，lo...
+
+    u014484649：有用
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    0
+   
+  • 评论
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

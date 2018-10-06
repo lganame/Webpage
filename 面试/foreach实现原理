@@ -1,0 +1,537 @@
+[]
+
+原
+
+从字节码看Java中for-each循环（增强for循环）实现原理
+
+2017年01月15日 16:11:47 十二页阅读数：2696 标签： Java Java虚拟机字节码迭代器 
+iterator
+个人分类： Java基础
+版权声明：本文为博主原创文章，未经博主允许不得转载。 https://blog.csdn.net/
+u011392897/article/details/54562596
+
+for-each循环是jdk1.5引入的新的语法功能。并不是所有东西都可以使用这个循环的。可
+以看下Iterable接口的注释，它说明了除了数组外，其他类想要使用for-each循环必须实
+现这个接口。这一点表明除了数组外的for-each可能底层是由迭代器实现的。
+
+Iterable接口在1.8之前只有一个方法,Iterator<T> iterator()，此方法返回一个迭代器
+。由于更早出现的Collection接口中早就有了这个同样的方法，所以只需要让Collection
+接口继承Iterable接口，基于Collection的集合类就可以不做任何更改就使用for-each循
+环。
+
+对于数组，因为数组不实现Iterable接口，它的for-each实现原理应该和Collection不一
+样。
+
+下面就通过分析下不同方式编译后的字节码，简单研究下for-each的的底层原理。
+
+一、数组的for-each
+下面是的两个很简单的类，可以看出它们的功能是一样的。Java环境使用的是jdk1.8_111
+。
+
+package iter;
+
+public class TestArray {
+    public static void main(String[] args) {
+        //String[] a = {"a", "b", "c"};
+        long[] a = {2L, 3L, 5L};
+        for (long i : a) {
+            System.err.println(i);
+        }
+    }
+}
+
+package iter;
+
+public class TestArrayFor {
+    public static void main(String[] args) {
+        //String[] a = {"a", "b", "c"};
+        long[] a = {2L, 3L, 5L};
+        for (int i = 0, len = a.length; i < len; i++) {
+            System.err.println(a[i]);
+        }
+    }
+}
+
+TestArray使用for-each，TestArrayFor使用传统for循环，使用long数组是为了字节码中
+好区分int/long。
+用javap -c看下两个类的字节码操作，保存成了文本，具体情况如下。
+
+Compiled from "TestArray.java"
+public class iter.TestArray {
+  public iter.TestArray();
+    Code:
+       0: aload_0
+       1: invokespecial #8                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: iconst_3
+       1: newarray       long
+       3: dup
+       4: iconst_0
+       5: ldc2_w        #16                 // long 2l
+       8: lastore
+       9: dup
+      10: iconst_1
+      11: ldc2_w        #18                 // long 3l
+      14: lastore
+      15: dup
+      16: iconst_2
+      17: ldc2_w        #20                 // long 5l
+      20: lastore
+      21: astore_1           /* 0-21行，创建long数组a，并保存在线程的当前栈帧的局部变量表的第1格*/
+      22: aload_1            /* 读取保存在线程的当前栈帧的局部变量表的第1格的对象的引用，就是读取数组a */
+      23: dup                /* 把a的引用复制一遍并且再放到栈顶 */
+      24: astore        6    /* 把栈顶的数存在线程的当前栈帧的局部变量表的第6格，就是生成a的一个值复制品b并存储起来，暂时不知道为什么这里要复制一次，后面的数组都还是用a表示 */
+      26: arraylength        /* 获取数组长度a.length */
+      27: istore        5    /* 把数组长度存储在线程的当前栈帧的局部变量表的第5格，22-27隐式执行了int len = a.length */
+      29: iconst_0           /* 读取数字0（这个就是普通的0）到栈中 */
+      30: istore        4    /* 把数字0放在线程的当前栈帧的局部变量表的第4格，29-30隐式执行了int i = 0 */
+      32: goto          51   /* 无条件跳转到51那个地方，开始循环的代码 */
+      35: aload         6    /* 读取数组a */
+      37: iload         4    /* 读取i */
+      39: laload             /* 读取a[i] */
+      40: lstore_2           /* 把a[i]存在线程的当前栈帧的局部变量表的第2格 */
+      41: getstatic     #22                 // Field java/lang/System.err:Ljava/io/PrintStream; /* 获取类的static属性，就是System.err */
+      44: lload_2            /* 读取存在线程的当前栈帧的局部变量表的第2格的数据，就是读取a[i] */
+      45: invokevirtual #28                 // Method java/io/PrintStream.println:(J)V          /* 执行虚拟机方法，30-36就是执行System.err.println(a[i]) */
+      48: iinc          4, 1 /* 将第4格的数字加1，就是执行i++ */
+      51: iload         4    /* 读取i */
+      53: iload         5    /* 读取a.length */
+      55: if_icmplt     35   /* 如果i < len，跳到标记35的那个地方，不满足就往下 */
+      58: return
+}
+
+Compiled from "TestArrayFor.java"
+public class iter.TestArrayFor {
+  public iter.TestArrayFor();
+    Code:
+       0: aload_0
+       1: invokespecial #8                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: iconst_3
+       1: newarray       long
+       3: dup
+       4: iconst_0
+       5: ldc2_w        #16                 // long 2l
+       8: lastore
+       9: dup
+      10: iconst_1
+      11: ldc2_w        #18                 // long 3l
+      14: lastore
+      15: dup
+      16: iconst_2
+      17: ldc2_w        #20                 // long 5l
+      20: lastore
+      21: astore_1           /* 0-21行，创建long数组a，并保存在线程的当前栈帧的局部变量表的第1格*/
+      22: iconst_0           /* 读取数字0（这个就是普通的0）到栈中 */
+      23: istore_2           /* 将栈顶的数字0保存在第二个，22-23就是执行int i = 0; */
+      24: aload_1            /* 读取保存在线程的当前栈帧的局部变量表的第1格的对象的引用，就是读取数组a */
+      25: arraylength        /* 获取数组长度a.length */
+      26: istore_3           /* 把数组长度保存在线程的当前栈帧的局部变量表的第3格，24-26就是执行int len = a.length */
+      27: goto          42   /* 无条件跳到标记42的那个地方，开始循环的代码 */
+      30: getstatic     #22                 // Field java/lang/System.err:Ljava/io/PrintStream; /* 获取类的static属性，就是System.err */
+      33: aload_1            /* 读取数组a */
+      34: iload_2            /* 读取i */
+      35: laload             /* 读取a[i] */
+      36: invokevirtual #28                 // Method java/io/PrintStream.println:(J)V          /* 执行虚拟机方法，30-36就是执行System.err.println(a[i]) */
+      39: iinc          2, 1 /* 将第2格的数字加1，就是执行i++ */
+      42: iload_2            /* 读取i */
+      43: iload_3            /* 读取len */
+      44: if_icmplt     30   /* 如果i < len，跳到标记30的那个地方，不满足就往下 */
+      47: return
+}
+
+本人对照下字节码指令表，简单翻译了以下，都写在上面，还算是比较清楚。/**/中的就
+是本人的注释，//开头的是字节码自带的信息，这些信息不能完全算是注释吧，可以算是
+对字节码中出现的常量的一种直白翻译，让你看得懂这些常量代表什么。
+通过编译后的字节码可以看出，数组的for-each和普通的for循环底层原理是一样的，都是
+用的普通for循环的那一套。数组的for-each比普通for循环多一点点操作，理论上是要慢
+一点点，这个暂时也不知道是为什么。这也是语法糖的一些代价，语法越简单，反而越不
+好进行底层优化。不过这个慢一点那真是一点，在循环体比较复杂时，这个差距就更小了
+，所以基本上可以认为这两种方式效率一样。实际中根据自己的情况选择，如果需要显式
+使用下标，就用传统for循环，其他的都可以使用for-each循环。
+
+
+二、Collection的for-each
+还是先贴两段简单的对比的代码，代码逻辑一样。Java环境使用的是jdk1.8_111。
+
+package iter;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class TestFor {
+    public static void main(String[] args) {
+        List<String> listA = new ArrayList<String>();
+        for(String str : listA) {
+            System.err.println(str);
+        }
+    }
+}
+
+package iter;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+public class TestIter {
+    public static void main(String[] args) {
+        List<String> listA = new ArrayList<String>();
+        for (Iterator<String> iter = listA.iterator(); iter.hasNext();) {
+            String s = iter.next();
+            System.err.println(s);
+        }
+    }
+}
+
+
+TestFor是for-each循环，TestIter是使用迭代器循环。
+还是跟数组的一样分析，贴下编译后的字节码。
+
+
+Compiled from "TestFor.java"
+public class iter.TestFor {
+  public iter.TestFor();
+    Code:
+       0: aload_0
+       1: invokespecial #8                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: new           #16                 // class java/util/ArrayList
+       3: dup
+       4: invokespecial #18                 // Method java/util/ArrayList."<init>":()V
+       7: astore_1
+       8: aload_1
+       9: invokeinterface #19,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      14: astore_3
+      15: goto          35
+      18: aload_3
+      19: invokeinterface #25,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      24: checkcast     #31                 // class java/lang/String
+      27: astore_2
+      28: getstatic     #33                 // Field java/lang/System.err:Ljava/io/PrintStream;
+      31: aload_2
+      32: invokevirtual #39                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      35: aload_3
+      36: invokeinterface #45,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      41: ifne          18
+      44: return
+}
+
+Compiled from "TestIter.java"
+public class iter.TestIter {
+  public iter.TestIter();
+    Code:
+       0: aload_0
+       1: invokespecial #8                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: new           #16                 // class java/util/ArrayList
+       3: dup
+       4: invokespecial #18                 // Method java/util/ArrayList."<init>":()V
+       7: astore_1
+       8: aload_1
+       9: invokeinterface #19,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      14: astore_2
+      15: goto          35
+      18: aload_2
+      19: invokeinterface #25,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      24: checkcast     #31                 // class java/lang/String
+      27: astore_3
+      28: getstatic     #33                 // Field java/lang/System.err:Ljava/io/PrintStream;
+      31: aload_3
+      32: invokevirtual #39                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      35: aload_2
+      36: invokeinterface #45,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      41: ifne          18
+      44: return
+}
+
+
+这两段字节码中自带的注释很多，基本上看得懂，就不添加注释了。
+两段字节码除了几个变量保存在线程的当前栈帧的局部变量表的索引（astore_n，这个n就
+是索引）不一样外，其余的都是一模一样的。不排除某次编译后连那几个索引值也一样，
+那就真一模一样了。字节码自带的注释都说了，Collection的for-each底层也是使用迭代
+器来实现的，两种方式可以说是完全等价的。
+
+对于实现了RandomAccess接口的实现类，因为它们的随机访问操作的时间复杂度为O(1)，
+大多数情况使用传统for循环会比用迭代器循环（这里的迭代器也可以用for-each替换，上
+面说了它们底层整体是一样的）要快。至于这一点是为什么，可以看下ArrayList的源码。
+它的迭代器虽然也是通过下标直接访问elementData数组，但是迭代器多了很多方法调用以
+及其他的额外操作，现在很多编译器cpu也都会对传统for循环进行特别的优化，在这个层
+面十几个指令的差别就很大了，这些因素加在一起导致RandomAccess的迭代器比传统for循
+环要慢一些。对于ArrayList这种，在cpu密集型的应用中应该只使用传统for循环，在循环
+体执行时间比较长的应用中，传统for循环和迭代器循环的差别就很小了，这时候使用迭代
+器（for-each循环）也不会明显降低执行效率。
+
+参考：
+1、https://docs.oracle.com/javase/8/docs/technotes/guides/language/foreach.html
+2、Java虚拟机规范（Java SE 8）
+
+以上内容如有问题，烦请指出，谢谢！
+
+
+阅读更多登录后自动展开
+想对作者说点什么？我来说一句
+ 
+
+java中增强for循环的原理
+
+H_Gao H_Gao
+
+10-23 4825
+
+package com.wind.gaohui; import java.util.ArrayList; import java.util.List;
+public class TestFor { ...
+
+ 
+
+Java中foreach循环的实现原理
+
+qq_15071263 qq_15071263
+
+07-02 8685
+
+Java中foreach循环的实现原理 import java.util.ArrayList; import
+java.util.Iterator; import java.util.List;/**...
+
+ 
+
+c程序运行机制与for循环的底层实现
+
+ParrySMS ParrySMS
+
+12-27 646
+
+前言今天做OJ发现多层的for循环调用，由于时间复杂度的增加，即使是步长不大的for循
+环，也非常容易导致时间超限。因此查阅了一些资料进行学习。多重的for循环，多数可用
+if else或者数组存值...
+
+ 
+
+最普通的java for循环
+
+XLM11 XLM11
+
+07-27 1232
+
+我确实没有想到，会栽倒在这里，好吧，其实是根本没有想到这里来，今天心血来潮，想
+刷刷算法，第一个挺简单，但是结果出来却和预期不一样。是这么回事，平时写for循环的
+时候是这样子的： int arrr...
+
+ 
+
+js中的三种循环（forEach、each、map）
+
+qq_33559304 qq_33559304
+
+03-09 9632
+
+三大循环使用 forEach、map是ECMA5中引入的但是IE9以下版本不支持可以从Array原型扩
+展可以实现以上全部功能，例如forEach方法:if (typeof Array.prototy...
+
+ 
+
+$.each循环
+
+qq_34226413 qq_34226413
+
+04-17 224
+
+对于循环我们首先会想到for循环，但是在前端对数组我们可以使用，但是对于json对象，
+想把对象中的属性的key-value循环去取出，那么for循环提供不了的。而each方法则给我
+们提供了便利，下面介...
+
+ 
+
+jquery中的for循环与each循环
+
+nianzhi1202 nianzhi1202
+
+10-16 3.2万
+
+jquery中的for循环与each循环
+
+ 
+
+javascript之forEach循环遍历
+
+c_kite c_kite
+
+03-30 1.1万
+
+forEach定义: forEach() 方法用于调用数组的每个元素，并将元素传递给回调函数。其实
+forEach()是Array下的一个方法. 注意: 无法使用break等语句跳出遍历, 直到所有...
+
+ 
+
+for循环和foreach循环的区别？
+
+jjs_hollo jjs_hollo
+
+11-17 3431
+
+//定义一个list集合 List list=new ArrayList(); list.add("aaa"); list.add("bbb");
+list.add("ccc"); ...
+
+ 
+
+原生js实现jq的$.each()方法
+
+sinat_32546159 sinat_32546159
+
+09-06 5100
+
+jq的$.each()方法：语法：jQuery.each(object, [callback]) 回调函数拥有两个参数：
+第一个为对象的成员或数组的索引，第二个为对应变量或内容。如果需要退出 each...
+
+文章热词
+
+java word打开 java 模板+参数 java收集控制台一行 java代码抽奖 java 对象动态堆
+
+相关热词
+
+字节码 zip字节码 try的字节码 lua53字节码 py字节码
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+个人资料
+
+[3_u0113928]
+
+十二页
+
+关注
+
+原创
+    17
+
+粉丝
+    31
+
+喜欢
+    7
+
+评论
+    10
+
+等级：
+     
+
+访问：
+    2万+
+
+积分：
+    419
+
+排名：
+    13万+
+
+勋章：
+
+持之以恒
+
+授予每个自然月内发布4篇或4篇以上原创或翻译IT博文的用户。不积跬步无以至千里，不
+积小流无以成江海，程序人生的精彩需要坚持不懈地积累！
+
+最新文章
+
+  • jdk1.8 LongAdder源码学习
+  • Java集合类框架学习 5.3—— ConcurrentHashMap(JDK1.8)
+  • Java集合类框架学习 5.2 —— ConcurrentHashMap(JDK1.7)
+  • Java集合类框架学习 5.1 —— ConcurrentHashMap(JDK1.6)
+  • 简单了解sun.misc.Unsafe
+
+个人分类
+
+  • JavaWeb 2篇
+  • Java虚拟机 1篇
+  • Java基础 4篇
+  • Java集合类 10篇
+
+归档
+
+  • 2017年3月 9篇
+  • 2017年2月 3篇
+  • 2017年1月 4篇
+  • 2016年12月 1篇
+
+热门文章
+
+  • 为什么HashMap继承了AbstractMap还要实现Map接口
+
+    阅读量：3011
+
+  • Java集合类框架学习 5.3—— ConcurrentHashMap(JDK1.8)
+
+    阅读量：2988
+
+  • jdk1.8 LongAdder源码学习
+
+    阅读量：2885
+
+  • 从字节码看Java中for-each循环（增强for循环）实现原理
+
+    阅读量：2694
+
+  • Java集合类框架学习 2 —— ArrayList(JDK1.8/JDK1.7/JDK1.6)
+
+    阅读量：2281
+
+最新评论
+
+  • Java集合类框架学习 5.3——...
+
+    qq_37113604：必须点个赞，分析的这么详细的帖子不多，百度上的帖子都大差不差，
+    相互模仿。
+
+  • Java集合类框架学习 5.3——...
+
+    qq_41447899：博主，你困惑的正是我困惑的，什么时候回来解个惑啊
+
+  • 简单了解sun.misc.Unsa...
+
+    mar_ljh：非常全面，总结的太好了
+
+  • jdk1.8 LongAdder源...
+
+    zhuqiwei520：老哥写了这么多，小弟佩服，没你这篇文章我还真看不懂LongAdder的
+    原理
+
+  • Java集合类框架学习 5.3——...
+
+    qq_27571221：可怕的撸猪
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    3
+   
+  • 评论
+
+    1
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

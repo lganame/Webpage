@@ -1,0 +1,449 @@
+[]
+
+原
+
+Servlet——Session(3)之实现原理的深入讨论
+
+2016年05月11日 17:20:06 KLeonard 阅读数：7742 标签： servlet session cookie
+个人分类： ☛JavaWeb ------ Servlet
+所属专栏： Servlet
+版权声明：本文为博主原创文章，未经博主允许不得转载。 https://blog.csdn.net/
+ggGavin/article/details/51376364
+
+Session实现原理深入讨论
+
+1.Session实现机制
+
+服务器是如何实现一个session为一个用户浏览器服务的？
+
+Session原理示意图
+
+解释：
+假如浏览器A先访问Servlet1，这时候它创建了一个Session，ID号为110，然后Servlet1将
+这个ID号以Cookie的方式返回给浏览器A，接着，如果浏览器A继续访问Servlet2，那么这
+个请求会带上Cookie值: JSESSIONID=110，然后服务器根据浏览器A传递过来的ID号找到内
+存中的这个Session。
+这时候假如浏览器B来访问Servlet1了，它的请求并没有带上 JSESSIONID这个Cookie值，
+由于它也要使用Session，所以服务器会新创建一个Session，ID号为119，并将这个ID号以
+Cookie的方式返回给浏览器B。之后的过程就同A了。
+
+我们通过【Session(1)之基础知识】中的Servlet1和Servlet2来说明这个原理，其中
+Servlet1用于创建Session，并添加属性；Servlet2用于读取Session中的属性。
+现在我们访问Servlet1，并抓包：
+
+Set-Cookie
+
+可以看到，Request Headers中并没有Cookie的信息，而Response Headers中有这么一句话
+：
+
+    Set-Cookie: JSESSIONID=2150AE444BF83FDACEA04BD0289F5AE2; Path=/Session1/;
+    HttpOnly
+
+说明这个时候服务器向客户端通过Cookie传递回了 JSESSIONID这个属性。
+
+然后我们再访问Servlet2，抓包如下：
+
+Cookie
+
+可以看到Response Headers中没有出现Set-Cookie这个头，而Request Headers中带上了
+Cookie这个头：
+
+    Cookie: JSESSIONID=2150AE444BF83FDACEA04BD0289F5AE2
+
+而这个头中正包含 JSESSIONID，并且它的值也就是我们之前Set-Cookie中 JSESSIONID的
+值。
+这就证明了我们之前图解的Session的原理，也就是服务器能够为不同的浏览器区分不同的
+Session的机制。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+但是这里又有一个问题：我们之前说过Cookie是多浏览器共享的，既然 JSESSIONID是以
+Cookie的方式保存于客户端的，那么为什么却不能为多个浏览器共享呢？
+
+    其实答案很简单，这个保存 JSESSIONID的Cookie是Session Cookie，而不是
+    Persistent cookie。在学习Cookie的时候我们学到如何设置Cookie的生命周期，如果
+    设置了Cookie的生命周期，那么这个Cookie就会被写入磁盘文件，并一直存放至它的
+    生命周期结束之后，然后自动清除；而如果没有设置Cookie的生命周期，那么这个
+    Cookie就是Session Cookie，也就是会话Cookie，它只存在于浏览器打开的这段时间
+    ，如果浏览器关闭，这个Cookie也就一并消失。
+    也就是说，Session Cookie是存在于浏览器的内存中的，浏览器关闭的时候它也就消
+    失了。因此呢， JSESSIONID也是存在于Session Cookie中的，所以很自然的，它也就
+    不能为多个浏览器共享！
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+那么有没有可能当关闭一个浏览器之后，再打开浏览器访问刚才的页面，而这个页面还可
+以保存着你的信息？比如，关掉IE后，再打开IE，上次购买的商品还在。
+
+    分析，假如我们没有在程序中设置Session的生命周期，所以它的生命周期是默认时间
+    30min，那么如果浏览器关闭的话，根据前面介绍的Session实现机制，这时候服务器
+    是不知道浏览器是否已经关闭的，也就是说，服务器端的Session仍然存在，而且会等
+    到30min之后，才会被销毁。
+    那么如果这时候我们带上Cookie：JSESSIONID=2150AE444BF83FDACEA04BD0289F5AE2这
+    个头，去访问刚刚浏览器关闭之前的页面，服务器依然是能够找到之前的Session，并
+    给我们提供相关数据的。
+
+通过上述分析，这个功能可以使用Session与Cookie的结合来能实现。
+
+现在呢，让我们修改Servlet1和Servlet2。
+在Servlet1中设置Session，并添加属性，然后将该Session的ID通过Cookie的方式回传给
+客户端，并且这个Cookie的name为“JSESSIONID”，value就是该Session的ID，这个ID可以
+直接通过session.getId()得到。，它的doGet方法如下：
+
+public void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    response.setContentType("text/html;charset=utf-8");
+    PrintWriter out = response.getWriter();
+
+    //创建一个session,默认生命周期为30min,并放入一个属性
+    HttpSession session = request.getSession();
+    session.setAttribute("name", "小明");
+    out.println("创建Session成功，并放入了一个值");
+
+    // 把该sessionid保存在cookie
+    // 这个cookie的键为JSESSIONID
+    Cookie cookie = new Cookie("JSESSIONID", session.getId());
+    cookie.setMaxAge(3600);
+    response.addCookie(cookie);
+}
+
+Servlet2保持不变，它依然只是去session中取出这个属性。实验可得，当关闭了浏览器之
+后，再次打开浏览器访问Servlet2，依然能够取出Session中的值。
+
+测试
+
+为什么呢，因为我们的Servlet1已经将JSESSIONID通过cookie的方式保存在了磁盘文件。
+理解了Session的实现机制，这个也就不难理解了。
+
+2.用户禁用Cookie后的Session处理
+
+这里存在一种情况，假如用户浏览器禁用了Cookie怎么办？比如我把Chrome的Cookie禁用
+，如下：
+
+禁用Cookie
+
+这时候，我们去访问一些大型的网站，比如购物网站，可以明显发现网站的很多功能已经
+无法正常实现。比如我去JD登录，服务器是无法获取我输入的验证码的，如下图所示：
+
+JD提示
+
+道理很简单，因为我禁用了Cookie，那么同样的，服务器端的Session也无法使用，因为
+Cookie不能保存JSESSIONID了。
+
+说回【Servlet(2)之简单应用】中最后一个简易购物车的例子，如果我们禁用了Cookie，
+会发现购物车中每次都只有当前刚刚购买的一本书，而找不到之前购买的了，道理相同，
+那么这种情况该怎么解决呢？
+
+解决方法：URL重写
+
+Servlet中的response提供了对URL重写的方法：
+
+    response.encodeRedirectURL(String url) – 用于对sendRedirect方法后的url地址
+    进行重写
+    response.encodeURL(String url) – 用于对表单action和超链接的url地址进行重写
+
+那么url重写是什么意思呢？其实就是人为地把JSESSIONID附在了url的后面，比如我们修
+改之前写的简易购物车，ShowBook中所有的点击购买超链接都要重写。
+之前我们是这么写的：
+
+out.println("<tr><td>"+book.getName()+"</td><td><a href='/MyCart/BuyBookCl?id="+book.getId()+"'>点击购买</a></td></tr>");
+
+现在进行URL重写：
+
+request.getSession();
+String url = "/MyCart/BuyBookCl?id="+book.getId();
+url = response.encodeURL(url);
+out.println("<tr><td>"+book.getName()+"</td><td><a href='"+url+"'>点击购买</a></td></tr>");
+
+需要注意的是，重写之前一定要调用或者确保使用过request.getSession()这个方法。
+
+我们可以通过源代码文件查看这些链接的区别。重写之前，访问ShowBook的源代码是这样
+的：
+
+URL重写之前的ShowBook的源代码
+
+重写之后呢：
+
+URL重写之后的ShowBook的源代码
+
+可以看到URL重写之后，jsessionid这个参数自动附在了url后面，由此，得以确保我们的
+Session在Cookie被禁用的情况下继续正常使用。这时候我们查看购物车的地址栏如下，可
+以明显看到jsessionid这个参数：
+
+ShowMyCart
+
+阅读更多登录后自动展开
+[bd650fd0-5]
+
+扫码向博主提问
+
+[3_gggavin]
+
+KLeonard
+
+非学，无以致疑；非问，无以广识
+
+  • 擅长领域：
+  • Java
+  • Python
+
+去开通我的Chat快问
+ 
+
+Spring Session解决分布式Session问题的实现原理
+
+上一篇：使用Spring Session和Redis解决分布式Session跨域共享问题 : http://
+blog.csdn.net/xlgen157387/article/details/574...
+想对作者说点什么？我来说一句
+ 
+
+session实现原理
+
+byr2015 byr2015
+
+08-09 208
+
+一、Session简单介绍　　在WEB开发中，服务器可以为每个用户浏览器创建一个会话对象
+（session对象），注意：一个浏览器独占一个session对象(默认情况下)。因此，在需要
+保存用户数...
+
+ 
+
+Cookie和Session的作用和工作原理
+
+guoweimelon guoweimelon
+
+03-14 1.6万
+
+一、Cookie详解（1）简介因为HTTP协议是无状态的，即服务器不知道用户上一次做了什么
+，这严重阻碍了交互式Web应用程序的实现。在典型的网上购物场景中，用户浏览了几个页
+面，买了一盒...
+
+ 
+
+分布式Session原理，最简单而高效的实现方式
+
+collonn collonn
+
+09-29 8109
+
+分布式Session原理
+
+ 
+
+Web框架系列：Session的实现原理
+
+cloudqiu cloudqiu
+
+03-16 601
+
+WEB应用都很依赖session这一功能。不少同学不明白session的原理，其实，session实现
+起来非常简单。HTTP协议是无状态了，每次访问一个资源，就发起一次连接，得倒资源后
+，就关闭了连接。...
+
+ 
+
+Spring-Session实现Session共享实现原理以及源码解析
+
+u010648555 u010648555
+
+03-09 5365
+
+知其然，还要知其所以然！本篇介绍Spring-Session的整个实现的原理。以及对核心的源
+码进行简单的介绍！实现原理介绍实现原理这里简单说明描述：就是当Web服务器...
+
+ 
+
+Session实现原理
+
+zhq426 zhq426
+
+09-28 1.5万
+
+ Session实现原理2008-08-26 17:11关键字: jsp，sessionHTTP协议（ http://
+www.w3.org/Protocols/ ）是“一次性单向”协议。服务端不...
+
+ 
+
+分布式Session的几种实现方式
+
+u014352080 u014352080
+
+06-26 3万
+
+一。分布式Session的几种实现方式 1.基于数据库的Session共享 2.基于NFS共享文件系统
+3.基于memcached 的session，如何保证 memcached 本身的...
+
+ 
+
+session原理及实现共享
+
+qq_405930170 qq_405930170
+
+04-26 1676
+
+最近，在工作中遇到一个问题，问题描述：一个用户在登录成功以后会把用户信息存储在
+session当中，这时session所在服务器为server1，那么用户在session失效之前如果再次
+使用app，那么...
+
+ 
+
+session功能实现原理
+
+max0301 max0301
+
+09-20 616
+
+        HTTP协议（http://www.w3.org/Protocols/）是“一次性单向”协议。         服
+务端不能主动连接客户端，只能被动等待并答复客户端请求。客户端连接服务端...
+
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+个人资料
+
+[3_gggavin]
+
+KLeonard
+
+关注向TA提问
+
+原创
+    177
+
+粉丝
+    202
+
+喜欢
+    157
+
+评论
+    75
+
+等级：
+     
+
+访问：
+    55万+
+
+积分：
+    7457
+
+排名：
+    4137
+
+勋章：
+
+专栏达人
+
+授予成功创建个人博客专栏的用户。专栏中添加五篇以上博文即可点亮！撰写博客专栏浓
+缩技术精华，专栏达人就是你！
+
+Contact me
+
+gejunqiang@outlook.com
+
+最新文章
+
+  • Spring——基于注解的配置
+  • Spring——AOP(2)之Spring 2.0 中的配置
+  • AspectJ——基于注解的开发方式
+  • AspectJ——切入点语法（7）之this、target、args、if以及逻辑运算
+  • AspectJ——定义通知
+
+博主专栏
+
+  • [120]
+
+    Python3
+
+    阅读量：12857644 篇
+  • [120]
+
+    Servlet
+
+    阅读量：10729424 篇
+  • [120]
+
+    XML
+
+    阅读量：484407 篇
+  • [120]
+
+    JavaWeb框架
+
+    阅读量：2264616 篇
+
+个人分类
+
+  • ☛Language 71篇
+  • ------ Java 18篇
+  • ------ Python3 44篇
+  • ------ Python Modules 5篇
+  • ------ Python Practice 6篇
+  • ☛Web前端 38篇
+  • ------ HTML 5篇
+  • ------ CSS 8篇
+  • ------ JavaScript 21篇
+  • ------ XML 7篇
+  • ☛JavaWeb 55篇
+  • ------ Servlet 19篇
+  • ------ JSP 5篇
+  • ------ Struts1.3 6篇
+  • ------ Hibernate 8篇
+  • ------ Spring 7篇
+  • ------ AspectJ 10篇
+  • ☛Data Structure 10篇
+  • ☛NetWork 5篇
+  • ☛Database 1篇
+  • ☛Linux 15篇
+
+展开
+
+最新评论
+
+  • AspectJ——切入点语法（3）...
+
+    qq_32684279：为啥我没有这个aspject 关键字
+
+  • Spring——入门
+
+    Z_HaiSome：赞一个，运行成功，不过最好把后面的目录结构附图一下，
+    spring-config.xml的位置什么的
+
+  • IPython介绍
+
+    ggGavin：[reply]wannanew[/reply] 你安装一下pyqt和qtconsole试试： [c...
+
+  • IPython介绍
+
+    wannanew：输入ipython qtconsole进入ipython图形交互界面这个我进不去怎么破
+
+  • Servlet——Session(...
+
+    ggGavin：[reply]qq_26222859[/reply] 当然可以
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    4
+   
+  • 评论
+
+    4
+
+  • 目录
+  • 收藏
+  • 快问
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

@@ -1,0 +1,377 @@
+[]
+
+原
+
+ConcurrentHashMap 弱一致的迭代器
+
+2011年08月22日 22:06:16 feiyu8607 阅读数：6243 标签： hashmap iterator thread 
+string exception vector
+个人分类： Java
+       java.util 包中的集合类都返回 fail-fast 迭代器，这意味着它们假设线程在集
+合内容中进行迭代时，集合不会更改它的内容。如果 fail-fast 迭代器检测到在迭代过程
+中进行了更改操作，那么它会抛出 ConcurrentModificationException，这是不可控异常
+。在迭代过程中不更改集合的要求通常会对许多并发应用程序造成不便。相反，比较好的
+是它允许并发修改并确保迭代器只要进行合理操作，就可以提供集合的一致视图，如
+java.util.concurrent 集合类中的迭代器所做的那样。 java.util.concurrent 集合返回
+的迭代器称为弱一致的（weakly consistent）迭代器。对于这些类，如果元素自从迭代开
+始已经删除，且尚未由 next() 方法返回，那么它将不返回到调用者。如果元素自迭代开
+始已经添加，那么它可能返回调用者，也可能不返回。在一次迭代中，无论如何更改底层
+集合，元素不会被返回两次。实例一
+
+package test.concurrent;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+
+public class ConcurrentIteratorModify {
+
+        /**
+         * @param args
+         */
+        public static void main(String[] args) {
+                HashMap<String, String> hashMap = new HashMap<String, String> ();
+                hashMap.put("t1","test1");
+                hashMap.put("t2","test2");
+                hashMap.put("t3","test3");
+                hashMap.put("t4","test4");
+
+                IteratorMap itMap = new IteratorMap(hashMap);
+                Thread thread = new Thread(itMap);
+
+                Collection<String> valus = hashMap.values();
+                Iterator it = valus.iterator();
+                thread.start();
+                for (;it.hasNext();) {
+            System.out.println(it.next());
+        }
+    }
+
+
+}
+
+class IteratorMap implements Runnable{
+        HashMap<String, String> hashMap ;
+        public IteratorMap(HashMap<String, String> hashMap ){
+                this.hashMap = hashMap;
+        }
+        public void run(){
+                //System.out.println(hashMap.remove("t5")); (1)
+
+          //System.out.println(hashMap.put("t5","test5")）;(2)  (1)(2)两种情况都会报错 
+
+}}
+
+实例一中，当启动另外一个线程thread去remove hashMap里面的值时（不管remove的对象
+是否存在），如果线程的remove，或put操作在
+
+Iterator it = valus.iterator();
+
+语句之后，程序会立即抛出ConcurrentModificationException，但程序还是可以执行一部
+分，
+
+程序结果：
+
+test2Exception in thread "main" java.util.ConcurrentModificationException at
+java.util.HashMap$HashIterator.nextEntry(Unknown Source) at
+java.util.HashMap$ValueIterator.next(Unknown Source) at
+test.concurrent.ConcurrentIteratorModify.main(ConcurrentIteratorModify.java:33)
+
+如果线程执行操作在创建iterator之前，则程序能够正常执行
+
+Iterator it = valus.iterator();
+
+将hashMap改成ConcurrentHashMap时，如果不管线程启动在创建iterator之前或之后，程
+序能够正常执行，不会报错，在创建iterator之后，修改对迭代值没有影响。
+
+
+
+PS:
+
+Vector 是强一致性，只保证add，remove操作是线程安全的，remove完所有元素以后是不
+会自己阻塞的。
+
+ArrayBlockingQueue 弱一致，add到确定大小或remove完所有元素是会自己阻塞的。
+
+阅读更多登录后自动展开
+想对作者说点什么？我来说一句
+ 
+
+CopyOnWriteArraySet 与CopyOnWriteArraySet 的使用高并发读写分离
+
+u012956987 u012956987
+
+03-06 1.1万
+
+   CopyOnWriteArrayList是ArrayList 的一个线程安全的变体，其中所有可变操作（add
+、set等等）都是通过对底层数组进行一次新的复制来实现的。  ...
+
+ 
+
+深入理解非阻塞同步IO和非阻塞异步IO
+
+ITer_ZC ITer_ZC
+
+09-15 1.7万
+
+这篇文章分析了Linux下的5种IO模型 http://blog.csdn.net/hguisu/article/details/
+7453390 很多人对阻塞 / 非阻塞，同步 / 异步的概...
+
+ 
+
+为什么ConcurrentHashMap是弱一致的
+
+mawming mawming
+
+07-21 1565
+
+转自http://ifeve.com/concurrenthashmap-weakly-consistent/ 为什么
+ConcurrentHashMap是弱一致的本文将用到Jav...
+
+ 
+
+ConcurrentHashMap的迭代器是强一致性的迭代器还是弱一致性的迭代器
+
+luman1991 luman1991
+
+08-26 5106
+
+而在迭代时，ConcurrentHashMap使用了不同于传统集合的快速失败迭代器（见之前的文章
+《JAVA API备忘---集合》）的另一种迭代方式，我们称为弱一致迭代器。在这种迭代方式
+中，当iter...
+
+ 
+
+ConcurrentHashMap是弱一致性分析
+
+wzq6578702 wzq6578702
+
+03-16 2754
+
+本文将用到Java内存模型的happens-before偏序关系（下文将简称为hb）以及
+ConcurrentHashMap的底层模型相关的知识。happens-before相关内容参见：JLS §17...
+
+ 
+
+ConcurrentHashMap的弱一致性导致的并发错误
+
+cloudeagle_bupt cloudeagle_bupt
+
+09-23 4092
+
+遇到如下异常 java.lang.IllegalStateException at
+java.util.concurrent.ConcurrentHashMap$HashIterator.remov...
+
+ 
+
+volatile的java弱一致性（ConcurrentHashMap 中get 是不加锁的）后补
+
+tomli2017 tomli2017
+
+05-01 590
+
+volatile的java弱一致性（ConcurrentHashMap 中get 是不加锁的）
+
+ 
+
+网络通信——socket(TCP/IP).Http,同步和异步的区别
+
+u013424496 u013424496
+
+06-24 6865
+
+1首先说下同步和异步的区别吧同步：提交请求->等待服务器处理->处理完毕返回这个期间
+客户端浏览器不能干任何事（比如普通B/S模式）异步：请求通过事件触发->服务器处理（
+这是...
+
+ 
+
+Reactor模式和Preactor模式
+
+shuizhilan shuizhilan
+
+10-29 2027
+
+Reactor和preactor都是IO多路复用模式，一般地,I/O多路复用机制都依赖于一个事件多路
+分离器(Event Demultiplexer)。分离器对象可将来自事件源的I/O事件分离出来，并分...
+
+ 
+
+ConcurrentHashMap为什么是弱一致性的
+
+yu757371316 yu757371316
+
+08-03 37
+
+关于ConcurrentHashMap在之前的ConcurrentHashMap原理分析中已经解释了原理，而
+HashTable其实大抵上只是对HashMap的线程安全的封装，在JDK7与JDK8中Ha...
+
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+个人资料
+
+[3_feiyu860]
+
+feiyu8607
+
+关注
+
+原创
+    51
+
+粉丝
+    25
+
+喜欢
+    12
+
+评论
+    16
+
+等级：
+     
+
+访问：
+    31万+
+
+积分：
+    3187
+
+排名：
+    1万+
+
+最新文章
+
+  • 常用Linux 命令
+  • 深入理解JDBC的超时设置
+  • 国内一些大公司的开源项目
+  • JS 图表
+  • Linux查看CPU和内存使用情况
+
+个人分类
+
+  • log4j 1篇
+  • java io 2篇
+  • Java 17篇
+  • 程序人生 6篇
+  • ThreadPoolExecutor 2篇
+  • Oracle 6篇
+  • Hibernate 1篇
+  • Java 谜题 7篇
+  • Concurrent 2篇
+  • Ibatis 7篇
+  • Linux 6篇
+  • Spring 10篇
+  • j2ee 代码 2篇
+  • Lucence全文索引 1篇
+  • Servlet 1篇
+  • 工具 1篇
+  • JVM 4篇
+  • webservice 1篇
+  • JavaScript 1篇
+  • Solr 1篇
+  • JS 1篇
+  • 杂项 1篇
+
+展开
+
+归档
+
+  • 2014年6月 1篇
+  • 2014年5月 3篇
+  • 2014年2月 2篇
+  • 2013年12月 1篇
+  • 2013年11月 1篇
+  • 2013年10月 1篇
+  • 2013年8月 1篇
+  • 2013年6月 1篇
+  • 2013年5月 1篇
+  • 2013年4月 2篇
+  • 2013年1月 3篇
+  • 2012年12月 5篇
+  • 2012年11月 2篇
+  • 2012年10月 2篇
+  • 2012年9月 1篇
+  • 2012年7月 5篇
+  • 2012年6月 7篇
+  • 2012年4月 1篇
+  • 2012年3月 2篇
+  • 2012年2月 1篇
+  • 2012年1月 2篇
+  • 2011年12月 8篇
+  • 2011年11月 15篇
+  • 2011年10月 6篇
+  • 2011年9月 1篇
+  • 2011年8月 4篇
+  • 2011年7月 3篇
+  • 2011年6月 8篇
+  • 2011年5月 7篇
+
+展开
+
+最新评论
+
+  • FreeMarker 获取页面re...
+
+    weixin_41228047：十分受用~
+
+  • ConcurrentHashMap...
+
+    huoxingren0523：看不懂写的什么
+
+  • FreeMarker 获取页面re...
+
+    u011768325：谢谢，很有用，转载了做知识储备，查起来也方便点
+
+  • FreeMarker 获取页面re...
+
+    sxx_gyj：需要其他配置不？我没取到
+
+  • JMS与Spring之一（用Jms...
+
+    a405828：如果ActiveMQ服务器没有启动，这个时候消息生产者使用JmsTemplate 向
+    ActiveM...
+
+牛人的博客
+
+  • 流星絮语 JAVA学习笔记
+  • 走向架构师之路（阿里袁志俊）
+  • 老唐的专栏
+  • MKing's Blog
+  • 程序人生-思考
+  • 敏捷开发-绩效管理
+  • 凌云-程序员应知
+  • 并发包详解-Collection介绍
+  • 陈皓博客-酷壳网博主
+  • 酷壳网
+  • DBA notes（Fenng冯大辉）
+  • 和大头(Java_Linux)
+  • 淘宝莫枢(JVM_ITeye)
+  • 核桃Blog(综合)
+  • 老紫竹的专栏_享受Java
+  • 淘宝_舒の_Java
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    0
+   
+  • 评论
+
+    2
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

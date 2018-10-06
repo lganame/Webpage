@@ -1,0 +1,378 @@
+[]
+
+原
+
+Java中 Thread和Runnable实现多线程的区别和联系
+
+2016年06月22日 12:18:19 Kamiki_ 阅读数：5379 标签： java 多线程线程
+个人分类： Java常用技术
+版权声明：本文为博主原创文章，未经博主允许不得转载。 https://blog.csdn.net/
+oxuanboy1/article/details/51733279
+
+Java有两种方式实现多线程，第一个是继承Thread类，第二个是实现Runnable接口。他们
+之间的联系：
+
+1、Thread类实现了Runable接口。
+
+2、都需要重写里面Run方法。
+
+他们之间的区别“
+
+1、实现Runnable的类更具有健壮性，避免了单继承的局限。
+
+2、Runnable更容易实现资源共享，能多个线程同时处理一个资源。
+
+看一下以继承Thread的卖票例子：
+
+public static void main(String[] args) {
+                // TODO Auto-generated method stub
+
+                        new MyThread().start();
+                        new MyThread().start();
+
+        }
+
+
+class MyThread extends Thread{
+    private int ticket = 5;
+    public void run(){
+         while(true){
+                 System.out.println("Thread ticket = " + ticket--);
+             if(ticket < 0){
+                break;
+             }
+         }
+    }
+}
+
+输出结果：
+
+Thread ticket = 5
+Thread ticket = 5
+Thread ticket = 4
+Thread ticket = 4
+Thread ticket = 3
+Thread ticket = 2
+Thread ticket = 3
+Thread ticket = 1
+Thread ticket = 2
+Thread ticket = 0
+Thread ticket = 1
+Thread ticket = 0
+
+
+从以上输出结果可以看出，我们创造了2个多线程对象，他们分别实现了买票任务，也就是
+一共卖了12张票。
+
+实现Runnable接口的卖票例子：
+
+<pre name="code" class="html">public static void main(String[] args) {
+                // TODO Auto-generated method stub
+                MyThread2 m=new MyThread2();
+                        new Thread(m).start();
+                        new Thread(m).start();
+
+
+        }
+class MyThread2 implements Runnable{
+    private int ticket = 5;
+    public void run(){
+         while(true){
+                 System.out.println("Runnable ticket = " + ticket--);
+             if(ticket < 0){
+                break;
+             }
+         }
+    }
+}
+
+输出结果：
+
+Runnable ticket = 5
+Runnable ticket = 4
+Runnable ticket = 3
+Runnable ticket = 2
+Runnable ticket = 1
+Runnable ticket = 0
+
+
+
+从结果我们可以看到，虽然我们声明了两个线程，但是一共卖了6张票。他们实现了资源共
+享。PS：在实际开发中，一定要注意命名规范，其次上面实现Runable接口的例子由于同时
+操作一个资源，会出现线程不安全的情况，如果情况需要，我们需要进行同步操作。
+
+
+
+阅读更多登录后自动展开
+想对作者说点什么？我来说一句
+ 
+
+JAVA多线程之Runnable和Thread比较
+
+u013755987 u013755987
+
+07-11 3.6万
+
+在我们开发的过程中常常会碰到多线程的问题，对于多线程的实现方式主要有两种：实现
+Runnable接口、继承Thread类。对于这两种多线程的实现方式也是有着一些差异。既然实
+现了多线程那必然离不开管理这些...
+
+ 
+
+Java中Runnable和Thread的区别
+
+zengmingen zengmingen
+
+11-18 8746
+
+概述 Runnable 是接口。 Thread 是类，且实现了Runnable接口。 Thread部分源码
+public class Thread implements Runna...
+
+ 
+
+你不知道的Runnable接口，深度解析Runnable接口
+
+zxw136511485 zxw136511485
+
+11-04 3.8万
+
+本文描述的是Android中的Runnable接口 。因Android中的线程源自于Java，所以首先需要
+了解Java中的线程！  详情请看这篇文章Android(线程一) 线程  ！     Jav...
+
+ 
+
+Thread 和 Runnable 的区别
+
+import_sadaharu import_sadaharu
+
+08-03 5131
+
+Thread 和 Runnable 的区别实际上，Thread也是一个Runnable,它实现了Runnable接口，
+在Thread类中有一个Runnable类型的target字段，代表要被执...
+
+ 
+
+mybatis中的#{}和${}区别
+
+u013552450 u013552450
+
+05-19 2.6万
+
+1. #将传入的数据都当成一个字符串，会对自动传入的数据加一个双引号。如：order by
+#user_id#，如果传入的值是111,那么解析成sql时的值为order by "111", 如果传入的...
+
+ 
+
+Thread类
+
+willlu10 willlu10
+
+03-25 2234
+
+　1 start方法　　start()用来启动一个线程，当调用start方法后，系统才会开启一个新
+的线程来执行用户定义的子任务，在这个过程中，会为相应的线程分配需要的资源。　　2
+run方法　　run...
+
+ 
+
+fork()
+
+qq_33528613 qq_33528613
+
+07-27 1038
+
+fork()的功能：复制一份原来的进程（韩浩）待更新。。。
+
+ 
+
+mybatis中#和$的区别
+
+weixin_39220472 weixin_39220472
+
+03-22 2898
+
+在mybatis接口mapper文件中引用传入的参数是通过#{param}或者${param}来使用的。1.数
+据类型匹配#：会进行预编译，而且进行类型匹配$:不进行数据类型匹配2.实现方式 #：用
+于变...
+
+ 
+
+linux中fork（）函数详解（原创！！实例讲解）
+
+jason314 jason314
+
+06-01 31.1万
+
+一、fork入门知识二、fork进阶知识三、fork高阶知识
+
+ 
+
+java线程系列---Runnable和Thread的区别、线程同步
+
+guoxiaolongonly guoxiaolongonly
+
+02-22 4530
+
+Runnable和Thread的区别原文线程锁原文鉴于我这篇文章被鄙视了，哈哈哈哈。我决定整
+理一下资源共享线程同步相关的知识。欢迎鄙视并谈一谈见解。 Java传统多线程的...
+
+文章热词
+
+java word打开 java 模板+参数 java收集控制台一行 java代码抽奖 java 对象动态堆
+
+相关热词
+
+java‖ 与java java的～ java　 java和--
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+个人资料
+
+[3_oxuanboy]
+
+Kamiki_
+
+关注
+
+原创
+    49
+
+粉丝
+    3
+
+喜欢
+    11
+
+评论
+    4
+
+等级：
+     
+
+访问：
+    2万+
+
+积分：
+    770
+
+排名：
+    7万+
+
+勋章：
+
+专栏达人
+
+授予成功创建个人博客专栏的用户。专栏中添加五篇以上博文即可点亮！撰写博客专栏浓
+缩技术精华，专栏达人就是你！
+
+持之以恒
+
+授予每个自然月内发布4篇或4篇以上原创或翻译IT博文的用户。不积跬步无以至千里，不
+积小流无以成江海，程序人生的精彩需要坚持不懈地积累！
+
+最新文章
+
+  • 电商项目总结
+  • 数据结构二叉树的性质
+  • 反编译unity3d发布apk
+  • Android 开源框架Universal-ImageLoader的使用
+  • Java 彻底弄明白synchronized的使用
+
+博主专栏
+
+  • [120]
+
+    剑指offer
+
+    阅读量：895325 篇
+
+链接
+
+Android任玉刚大牛的博客
+
+兰亭风雨的博客
+
+专业面试论坛
+
+自定义VIEW相关
+
+个人QQ：2317429030
+
+归档
+
+  • 2018年4月 1篇
+  • 2017年8月 1篇
+  • 2017年3月 1篇
+  • 2016年6月 30篇
+  • 2016年5月 6篇
+  • 2016年4月 8篇
+  • 2015年10月 3篇
+  • 2015年7月 1篇
+
+展开
+
+热门文章
+
+  • Java 彻底弄明白synchronized的使用
+
+    阅读量：5386
+
+  • Java中 Thread和Runnable实现多线程的区别和联系
+
+    阅读量：5373
+
+  • Android布局动画---给你的View闪亮登场
+
+    阅读量：1710
+
+  • 面试题11 ：O（1）删除单链表节点
+
+    阅读量：1469
+
+  • 两个链表的第一个公共节点
+
+    阅读量：1150
+
+最新评论
+
+  • Java中 Thread和Runn...
+
+    z15732621582：实现Runnable接口比继承Thread类所具有的的优势：适合多个相同的
+    程序代码的线程去处理同一...
+
+  • Java中 Thread和Runn...
+
+    lhs472194266：第一示例：new MyThread().start(); 两次创建了两个线程对象第二
+    示例：new...
+
+  • Java中 Thread和Runn...
+
+    lhs472194266：第二个示例是什么原理。。。我不要只看结论
+
+  • Java中 Thread和Runn...
+
+    Y_HMDIAOLAN：很好，非常通俗易懂
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    4
+   
+  • 评论
+
+    4
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

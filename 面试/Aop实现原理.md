@@ -1,33 +1,28 @@
-[]
-
-原
-
 Spring AOP 实现原理
 
-置顶 2013年09月24日 15:23:43 moreevan 阅读数：405248
 个人分类： spring
 
-什么是AOP
+###什么是AOP
 
-AOP（Aspect-OrientedProgramming，面向方面编程），可以说是OOP（Object-Oriented
-Programing，面向对象编程）的补充和完善。OOP引入封装、继承和多态性等概念来建立一
-种对象层次结构，用以模拟公共行为的一个集合。当我们需要为分散的对象引入公共行为
-的时候，OOP则显得无能为力。也就是说，OOP允许你定义从上到下的关系，但并不适合定
-义从左到右的关系。例如日志功能。日志代码往往水平地散布在所有对象层次中，而与它
-所散布到的对象的核心功能毫无关系。对于其他类型的代码，如安全性、异常处理和透明
-的持续性也是如此。这种散布在各处的无关的代码被称为横切（cross-cutting）代码，在
-OOP设计中，它导致了大量代码的重复，而不利于各个模块的重用。
+**AOP（Aspect-OrientedProgramming，面向方面编程）**，可以说是**OOP（Object-Oriented
+Programing，面向对象编程）的补充和完善**。OOP引入封装、继承和多态性等概念来建立一
+种对象层次结构，用以模拟公共行为的一个集合。当我们需要为**分散的对象引入公共行为
+的时候，OOP则显得无能为力**。也就是说，**OOP允许你定义从上到下的关系，但并不适合定
+义从左到右的关系**。**例如日志功能。日志代码往往水平地散布在所有对象层次中，而与它
+所散布到的对象的核心功能毫无关系**。对于其他类型的代码，如安全性、异常处理和透明
+的持续性也是如此。这种散布在各处的无关的代码被称为**横切（cross-cutting）代码，**在
+OOP设计中，它导致了大量代码的重复，而不利于各个模块的重用**。
 
  
 
-而AOP技术则恰恰相反，它利用一种称为“横切”的技术，剖解开封装的对象内部，并将那些
-影响了多个类的公共行为封装到一个可重用模块，并将其名为“Aspect”，即方面。所谓“方
-面”，简单地说，就是将那些与业务无关，却为业务模块所共同调用的逻辑或责任封装起来
+而AOP技术则恰恰相反，它利用一种称为“横切”的技术，**剖解开封装的对象内部，并将那些
+影响了多个类的公共行为封装到一个可重用模块，并将其名为“Aspect”，即方面**。所谓“方
+面”，简单地说，就是**将那些与业务无关，却为业务模块所共同调用的逻辑或责任封装起来
 ，便于减少系统的重复代码，降低模块间的耦合度，并有利于未来的可操作性和可维护性
-。AOP代表的是一个横向的关系，如果说“对象”是一个空心的圆柱体，其中封装的是对象的
+**。AOP代表的是一个横向的关系，**如果说“对象”是一个空心的圆柱体，其中封装的是对象的
 属性和行为；那么面向方面编程的方法，就仿佛一把利刃，将这些空心圆柱体剖开，以获
 得其内部的消息。而剖开的切面，也就是所谓的“方面”了。然后它又以巧夺天功的妙手将
-这些剖开的切面复原，不留痕迹。
+这些剖开的切面复原，不留痕迹**。
 
  
 
@@ -40,9 +35,9 @@ Avanade公司的高级方案构架师Adam Magee所说，AOP的核心思想就是
 
  
 
-实现AOP的技术，主要分为两大类：一是采用动态代理技术，利用截取消息的方式，对该消
+实现AOP的技术，主要分为两大类：**一是采用动态代理技术，利用截取消息的方式，对该消
 息进行装饰，以取代原有对象行为的执行；二是采用静态织入的方式，引入特定的语法创
-建“方面”，从而使得编译器可以在编译期间织入有关“方面”的代码。
+建“方面”，从而使得编译器可以在编译期间织入有关“方面”的代码**。
 
 
 AOP使用场景
@@ -94,7 +89,7 @@ BeforeAdvice, AfterAdvice, ThrowAdvice和DynamicIntroductionAdvice
 
  
 
-切入点（Pointcut）: 指定一个通知将被引发的一系列连接点的集合。AOP框架必须允许开
+**切入点（Pointcut）**: 指定一个**通知**将被引发的一系列**连接点**的集合。AOP框架必须允许开
 发者指定切入点：例如，使用正则表达式。 Spring定义了Pointcut接口，用来组合
 MethodMatcher和ClassFilter，可以通过名字很清楚的理解， MethodMatcher是用来检查
 目标类的方法是否可以被应用此通知，而ClassFilter是用来检查Pointcut是否应该应用到
@@ -102,10 +97,10 @@ MethodMatcher和ClassFilter，可以通过名字很清楚的理解， MethodMatc
 
  
 
-引入（Introduction）: 添加方法或字段到被通知的类。 Spring允许引入新的接口到任何
-被通知的对象。例如，你可以使用一个引入使任何对象实现 IsModified接口，来简化缓存
-。Spring中要使用Introduction, 可有通过DelegatingIntroductionInterceptor来实现通
-知，通过DefaultIntroductionAdvisor来配置Advice和代理类要实现的接口
+引入（Introduction）: **添加方法或字段**到被通知的类。 Spring允许引入新的接口到任何
+被通知的对象。例如，你可以使用一个引入使任何对象实现 **IsModified接口**，来简化缓存
+。Spring中要使用Introduction, 可有通过**DelegatingIntroductionInterceptor**来实现通
+知，通过**DefaultIntroductionAdvisor**来配置Advice和代理类要实现的接口
 
  
 
@@ -113,14 +108,14 @@ MethodMatcher和ClassFilter，可以通过名字很清楚的理解， MethodMatc
 
  
 
-AOP代理（AOP Proxy）: AOP框架创建的对象，包含通知。在Spring中，AOP代理可以是JDK
+AOP代理（AOP Proxy）: **AOP框架创建的对象，包含通知**。在Spring中，AOP代理可以是JDK
 动态代理或者CGLIB代理。
 
  
 
-织入（Weaving）: 组装方面来创建一个被通知对象。这可以在编译时完成（例如使用
+织入（Weaving）: **组装方面来创建一个被通知对象。这可以在编译时完成（例如使用
 AspectJ编译器），也可以在运行时完成。Spring和其他纯Java AOP框架一样，在运行时完
-成织入。
+成织入。**
 
 
 Spring AOP组件
@@ -162,8 +157,8 @@ Spring AOP组件
 Spring AOP代理对象的生成
 
 
-Spring提供了两种方式来生成代理对象: JDKProxy和Cglib，具体使用哪种方式生成由
-AopProxyFactory根据AdvisedSupport对象的配置来决定。默认的策略是如果目标类是接口
+**Spring提供了两种方式来生成代理对象: JDKProxy和Cglib，具体使用哪种方式生成由
+AopProxyFactory根据AdvisedSupport对象的配置来决定**。默认的策略是如果目标类是接口
 ，则使用JDK动态代理技术，否则使用Cglib来生成代理。下面我们来研究一下Spring如何
 使用JDK来生成代理对象，具体的生成代码放在JdkDynamicAopProxy这个类中，直接上相关
 代码：
@@ -195,8 +190,8 @@ AopProxyFactory根据AdvisedSupport对象的配置来决定。默认的策略是
 
 下面的问题是，代理对象生成了，那切面是如何织入的？
 
-我们知道InvocationHandler是JDK动态代理的核心，生成的代理对象的方法调用都会委托
-到InvocationHandler.invoke()方法。而通过JdkDynamicAopProxy的签名我们可以看到这
+我们知道**InvocationHandler**是JDK动态代理的核心，生成的代理对象的方法调用都会委托
+到InvocationHandler.invoke()方法。而通过**JdkDynamicAopProxy**的签名我们可以看到这
 个类其实也实现了InvocationHandler，下面我们就通过分析这个类中实现的invoke()方法
 来具体看下Spring AOP是如何织入切面的。
 

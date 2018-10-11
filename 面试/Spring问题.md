@@ -1,23 +1,25 @@
-1、Spring中AOP的应用场景、Aop原理、好处?
-Aop-Aspect Oriented Programming面向切片编程:用来封装横切关注点，具体可以在下面的场景中使用:
+#1、Spring中AOP的应用场景、Aop原理、好处?
+Aop-Aspect Oriented Programming面向切片编程:用来封装**横切关注点**，具体可以在下面的场景中使用:
 Authentication权限、Caching缓存、Context passing内容传递、Error handling错误处理、Lazy loading懒加载、Debugging调优、logging、tracing、profiling and monitoring记录跟踪优化校准、Performance optimization 性能优化、Persistence持久化、Resource pooling资源池、Synchronization同步、Transactions事务。
+*权限、缓存、内容、错误、懒、调试、日志、跟踪、性能、持久、资源、同步、事务*
+*日志内容里有很多错误，因为懒得调试，资源无法同步跟踪缓存，影响事务性能*
 原理:Aop是面向切面编程，是通过动态代理的方式为程序添加统一功能，集中解决一些公共问题。
 优点：1、各个步骤之间的良好隔离性耦合性大大降低
 2、源代码无关性，再扩展功能的同时不对源码进行修改操作
-
-2、Spring中ioc的作用与原理？对象创建的过程。
-IOC--Inversion of Control控制反转。当某个角色需要另外一个角色协助的时候，在传统的程序设计过程中，通常由调用者来创建被调用者的实例对象。但在Spring中创建被调用者的工作不再由调用者来完成，因为称为控制反转。创建被调用者的工作由Spring来完成，然后注入调用者直接使用。
-
-3、介绍Spring框架
-它是一个一站式(full-stack)全栈式框架，提供了从表现层-springMVC业务层-spring再到持久层-spirngdata的一套完整的解决方案。我们在项目中可以只使用spring的一个框架，它就可以提供表现层的mvc框架，持久层的Dao框架。它的两大核心Ioc和AOP更是为我们程序解耦和代码简洁易维护提供了支持。
-
-4、Spring常见创建对象的注解
+*解耦的同时不对源码进行修改*
+#2、Spring中ioc的作用与原理？对象创建的过程。
+IOC--Inversion of Control控制反转。当某个角色需要另外一个角色协助的时候，在传统的程序设计过程中，通常由调用者来创建被调用者的实例对象。但在Spring中创建被调用者的工作不再由调用者来完成，因此称为控制反转。创建被调用者的工作由Spring来完成，然后注入调用者直接使用。
+*我本来需要请人帮忙，Spring主动帮我找来*
+#3、介绍Spring框架
+它是一个一站式(full-stack)全栈式框架，提供了从表现层-springMVC业务层-spring再到持久层-springdata的一套完整的解决方案。我们在项目中可以只使用spring的一个框架，它就可以提供表现层的mvc框架，持久层的Dao框架。它的两大核心Ioc和AOP更是为我们程序解耦和代码简洁易维护提供了支持。
+*表现业务很持久的样子*
+#4、Spring常见创建对象的注解
 @Cmponent@Controller@Service@Repository
-
-5、Spring中乃至的设计模式
+*组件、控制器服务仓库*
+#5、Spring中用到的设计模式
 答：简单工厂、工厂方法、单例模式、适配器、包装器、代理、观察者、策略、模板方法
-
-6、Spring的优点
+*带包碱观摩单侧工*
+#6、Spring的优点
 答：1、降低了组件之间的耦合性，实现了软件各层之间的解耦
 2、可以使用容易提供的众多服务，如事务管理、消息服务
 3、容器提供单例模式支持
@@ -29,7 +31,7 @@ IOC--Inversion of Control控制反转。当某个角色需要另外一个角色�
 9、spring的DI机制降低了业务对象替换的复杂性
 10、spring的高度开放性，并不强制应用完全依赖于Spring，开发者可以自由选择spring的部分或全部
 
-7、SpringBean的作用域之间有什么区别
+#7、SpringBean的作用域之间有什么区别
 Spring容器中的bean可以分为5 个范围。所有范围的名称都是自说明的，但是为了避免混淆，不是让我们解释一下：
 singleton:这种bean范围是默认的，这种范围确保不管接受到多少个请求，每个容器只有一个bean实例，单例的模式由bean factory自身来维护。
 prototype:原形范围与单例范围相反，为每一个bean请求提供一个实例。
@@ -38,7 +40,7 @@ Session:与请求范围类似，确保每个sesion中有一个bean的实例，�
 global-session:global-session和portlet应用相关。当你的应用部署在portlet容器中工作时，它包含很多portlet。如果你想要声明让所有的Portlet共用全局的存储变量的话，那么这全局变量需要存储在global-session中。
 全局作用域与Sevlet中的session作用域效果相同
 
-8、Spring管理事务有几种方式?
+#8、Spring管理事务有几种方式?
 答:有两种方式
 1、编程式事务，在代码中硬编码（不推荐使用）
 2、声明式事务，在配置文件中配置(推荐使用）
@@ -46,27 +48,29 @@ global-session:global-session和portlet应用相关。当你的应用部署在po
 a、基于XML的声明式事务
 b、基于注解的声明式事务
 
-9、spring中自动装配的方式有哪些？
+#9、spring中自动装配的方式有哪些？
 1、No:即不启用自动装配
 2、byName:通过属性的名字的方式查找的JavaBean的依赖的对象并为其注入。比如说类Computer有个属性printer，指定其autowire属性为byName后，SpringIoc容器会在配置文件中查找id/name属性为printer的bean，然后使用Setter方法为其注入。
 3、byType:通过属性的类型查找JavaBean依赖的对象并为其注入。比如类Computer有个属性printer，类型为Printer，那么，指定其autowire属性为byType后，SpringIOC容器会查找Class属性为Printer的bean，使用Setter方法为其注入。
 4、constructor:通过byType一样，也是通过类型查找依赖对象。与byType的区别在于 它不是使用Setter方法注入，而是使用构造子注入。
 5、autodetect:在byType和constructor之间自动的选择注入方式。
 6、default:由上级标签<beans>的default-autowire属性确定。
-10、spring中的核心类有哪些，各有什么作用。
+
+#10、spring中的核心类有哪些，各有什么作用。
 答:BeanFactory:产生一个新的实例，可以实现单例模式
 BeanWrapper:提供统一的get及set方法
 ApplicationContext:提供框架析实现，包括EBanFactory的r所有功能
-11、Bean的调用方式有哪些
+
+#11、Bean的调用方式有哪些
 答:有三种方式可以得到Bean并进行调用:
 1、使用BeanWrapper
 2、使用BeanFactory
 3、使用ApplicationContext
-12、什么是IOC，什么又是DI，他们有什么区别?
+#12、什么是IOC，什么又是DI，他们有什么区别?
 依赖注入是一个程序设计模式和架构模型，一些时候也称作控制反转，尽管在技术上来讲，依赖注入是一个IOC的特殊实现，依赖注入是指一个对象应用另外一个对象来提供一个特殊的能力，例如：把一个数据库连接已参数的形式传到一个对象的结构方法里面而不是在那个对象内部自行创建一个连接。控制舞者 依赖注入的基本思想就是把类的依赖从类内部转化到外部以减少依赖
 应用控制反转，对象在被创建的时候，由一个调控系统内所有对象的外界实体，将其所依赖的对象的引用，传递给它，依赖被注入到对象中，所以，控制反转是，关于一个对象如何获取他所依赖的对象的引用，这个责任的反转。
 
-13、Spring有两种代理方式：
+#13、Spring有两种代理方式：
 若目标对象实现了若干个接口，Spring使用JDK的java.lang.reflect.Proxy类代理。
 优点：因为有接口，所以使系统更加松耦合。
 缺点：为每一个目标类创建接口
@@ -74,7 +78,7 @@ ApplicationContext:提供框架析实现，包括EBanFactory的r所有功能
 优点：因为代理类与目标类是继承关系，所以不需要有接口的存在 。
 缺点：因为没有使用接口，所以系统的耦合性没有JDK的动态代理好。
 
-14、SpringMVC的流程
+#14、SpringMVC的流程
 1、用户发送请求至前端控制器DispatcherServlet
 2、DispatcherServlet收到请求调用HandlerMapping处理器映射器
 3、处理器映射器根据请求url找到具体的处理器，生成处理器对象及处理器拦截器（如果有则生成）一并返回给DispatcherServerlet。
@@ -87,7 +91,7 @@ ApplicationContext:提供框架析实现，包括EBanFactory的r所有功能
 10、DispatcherServlet对view进行渲染视图（即将模型数据填充至视图中）
 11、DispatcherServlet响应用户
 
-15、SpringMVC优点
+#15、SpringMVC优点
 
 
 Dubbo支持哪些协议，每种协议的应用场景，优缺点?
@@ -99,17 +103,17 @@ hessian:集成Hessian服务，基于HTTP通讯，采用Servlet显露服务，Dub
 memcache:基于meecached实现的RPC协议
 redis:基于redis实现的rpc协议
 
-2、Dubbo超时时间怎样设置？
+#2、Dubbo超时时间怎样设置？
 Dubbo超时时间设置有两种方式：
 服务提供者端设置超时时间，在Dubbo的用户文档中，推荐如果能在服务端多配置就尽量多配置，因为服务提供者比消费者更清楚自己提供的服务特性。服务消费者设置超时时间，如果在消费者端设置了超时时间，以消费者端为主，即优先级更高。因为服务调用方设置超时时间控制性更灵活。如果消费方超时，服务端线程不会定制，会产生警告。
 
-3、Dubbo有哪些注册中心?
+#3、Dubbo有哪些注册中心?
 Multicast注册中心:Multicast注册中心不需要任何中心节点，只要广播地址，就能进行服务注册和发现。基于网络中组播传输实现：
 Zookeeper注册中心:基于分布式协调系统Zookeeper实现，采用Zookepper的watch机制实现数据变更；
 redis注册中心：基于redis实现，采用key/Map存储，在key存储服务名和类型，Map中key存储服务URL，value服务过期时间。基于redis的发布/订阅模式通知数据变更：
 Simple注册中心
 
-4、Dubbo集群的负载均衡有哪些策略
+#4、Dubbo集群的负载均衡有哪些策略
 Dubbo提供了常见的集群策略的实现，并预扩展点予以自行实现。
 1、它基于组件技术的，全部的应用对象，无论控制器和视图，还是业务对象之类的都是java组件，并且和Spring提供的其他基础结构紧密集成。
 2、不依赖于ServletAPI
@@ -117,9 +121,10 @@ Dubbo提供了常见的集群策略的实现，并预扩展点予以自行实现
 4、支持各种请求资源的映射策略
 5、它应是易于扩展的。
 
+#注解
 SpringMVC中有一个Servlet，是通过它来将前端原请求分控制器的，这个Servlet的名字DispatcherServlet
 声明控制器的注解是@Controller
-控制器类中有一个成员变量，已经在spring配置文件中声明，要将这个成员变量注很高的注角是@autowire
+控制器类中有一个成员变量，已经在spring配置文件中声明，要将这个成员变量注很高的注解是@autowire
 将一个请求url指向一个类的方法的注解是@RequestMapping
 将前台的form中input控件的name属性绑定到控制器类中的方法参数的注解是@RequestParam
 18通常用来将登录用户设置为session对象的注解是@SesssionAttribute

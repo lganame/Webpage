@@ -1,0 +1,760 @@
+[]
+
+原
+
+JSF简介
+
+2007年10月19日 20:36:00 qjyong 阅读数：34854 标签
+： jsf bean servlet jsp encoding html
+个人分类： JSF
+JSF简介
+一、 什么是 JSF：
+JavaServer Faces (JSF) 是一种用于构建 Web 应用程序
+的新标准 Java 框架。它提供了一种以组件为中心来开发
+Java Web 用户界面的方法，从而简化了开发。
+JavaServer Faces于2004年三月1.0版正式提出，清楚的
+将Web应用程序的开发者划分了三个角色：网页设计人员
+、应用程序设计人员以及UI组件开发人员。从使用的角度
+来看，网页设计人员与应用程序设计人员可以他们所熟悉
+的方式开发程序，而不用侵入彼此的工作范围，而UI组件
+开发人员可以独立的开发个别组件，细节的部份留给了他
+们来处理。
+JSF 还通过将良好构建的模型-视图-控制器 (MVC) 设计
+模式集成到它的体系结构中，确保了应用程序具有更高的
+可维护性。
+由于 JSF 是通过 Java Community Process (JCP) 开发
+的一种 Java 标准，因此开发工具供应商完全能够为
+JavaServer Faces 提供易于使用的、高效的可视化开发
+环境。
+ 
+二、 JSF 体系结构：
+JSF 的主要优势之一就是它既是 Java Web 应用程序的用
+户界面标准又是严格遵循模型-视图－控制器 (MVC) 设计
+模式的框架。用户界面代码（视图）与应用程序数据和逻
+辑（模型）的清晰分离使 JSF 应用程序更易于管理。为
+了准备提供页面对应用程序数据访问的 JSF 上下文和防
+止对页面未授权或不正确的访问，所有与应用程序的用户
+交互均由一个前端FacesServlet（控制器）来处理。
+ [jsf_ch1_1]
+三、 JSF 生命周期：
+FacesServlet 充当用户和 JSF 应用程序之间的纽带。它
+在明确限定的 JSF 生命周期（规定了用户请求之间的整
+个事件流）的范围内工作。
+1．   当JSF页面上的一个事件发生时（比如：用户单击
+了一个按钮），事件通知通过HTTP发往服务器。服务器端
+使用FacesServet这个特殊的Servlet处理该通知。
+2．   FacesServlet一接收到用户的请求就创建一个
+FacesContext对象（JSF上下文，它存放了应用程序的所
+有数据）。在处理过程中，主要修改的就是这个
+FaceContext对象。
+3．   接着就是处理过程，处理器是一个叫作Lifecycle
+的对象。FacesServet把控制权转交给Lifecycle对象。该
+对象分6个阶段来处理FacesContext对象以生成响应，最
+后将响应发回客户端。
+Lifecycle对象处理JSP请求所需要的一系列动作称为请求
+处理生命周期。过程状态图如下：
+[jsf_ch1_2]
+由于请求处理生命周期里的应用请求值、处理验证、更新
+模型值和调用应用程序等阶段都可以在当前的请求对应的
+FacesContext实例中添加事件，因此，JSF实现必须在这
+些阶段后处理这些事件。
+ 
+┌────┬───────────────────────────────────────────┐
+│阶段│说明                                       │
+├────┼───────────────────────────────────────────┤
+│恢复│为选定的视图找到或创建组件树。             │
+│视图│一旦用户单击JSP页面上的链接或按钮，就会启动│
+│    │此阶段。JSF应用里的JSP页面被表示成一个组件 │
+│    │树。JSF实现会进一步将这些组件链接到事件处理│
+│    │程序和验证程序，并将视图保存在FacesContext │
+│    │对象中，以备后面的处理过程所用。           │
+│    │FacesContext对象包含了JSF用来管理当前会话中│
+│    │当前请求的GUI组件状态所需要的所有状态信息。│
+├────┼───────────────────────────────────────────┤
+│应用│使用请求中发送来的值来更新组件树的组件值。 │
+│请求│因为请求中发送来的值都是String类型的，所以 │
+│值  │在更新组件树的组件值之前，必须将这些值转换 │
+│    │为相应类型。这个过程也是解码。若转换有错误 │
+│    │，这些错误将添加到FacesContext对象。       │
+├────┼───────────────────────────────────────────┤
+│处理│当每个组件的本地值被更新后，Lifecycle对象都│
+│验证│会根据这些注册组件的验证规则来验证这些值的 │
+│    │合法性。                                   │
+│    │如果输入的值不符合验证规则，就会将验证错误 │
+│    │添加至FacesContext对象，并将组件标记为无效 │
+│    │。JSF将转至呈现响应阶段，并显示带有验证错误│
+│    │消息的视图。                               │
+│    │如果没有遇到验证错误，JSF将进入下一阶段。  │
+├────┼───────────────────────────────────────────┤
+│更新│更新与组件相关的后台bean（也叫管理bean）或 │
+│模型│者模型对象的值。只有那些与组件值绑定在一起 │
+│值  │的Bean属性才会被更新。                     │
+├────┼───────────────────────────────────────────┤
+│调用│JSF控制器调用应用程序来处理应用程序级的事件│
+│应用│，如提交一个表单。（此阶段可执行业务逻辑） │
+│程序│                                           │
+├────┼───────────────────────────────────────────┤
+│呈现│使用当前的显示技术（如JSP）显示选定的视图。│
+│响应│                                           │
+└────┴───────────────────────────────────────────┘
+ 
+四、 设置JSF环境：
+1.    JSF库：
+您可以到JSF官方网站的下载区下载其压缩包：http://
+java.sun.com/javaee/javaserverfaces/download.html
+，在下载压缩包并解压缩之后，将其lib目录下的jar 档
+案复制至您的Web应用程序的/WEB-INF/lib目录下，另外
+您还需要jstl.jar与standard.jar 文件，这些文件您可
+以在sample 目录下，解压缩当中的一个范例，在它的/
+WEB-INF/lib目录下找到，将之一并复制至您的Web应用程
+序的/WEB-INF/lib目录下。
+您总共需要以下的jar文件：
+1)   jsf-api.jar ：定义于JSF规范中的JSF API类。
+2)   jsf-impl.jar ：特定实现的JSF类(不同的实现组织
+，包名可能不同)。
+3)   rcommons-digester.jar ：解析xml文件的类。
+4)   commons-collections.jar ：提供了基于Java
+Collection类创建的各种类。
+5)   commons-beanutils.jar ：定义和访问JavaBean组
+件属性的应用工具。
+6)   commons-logging.jar ：日志工具。
+7)   jstl.jar ：JSTL API类。
+8)   standard.jar ：JSTL 的实现类。
+2.    配置：
+对所有Java web应用来说，配置开始于Web应用部署描述
+符。另外，Faces具有自己的扩展配置系统以支持各种附
+加特征。
+1)   Servlet配置：
+JSF应用需要Servlet，称为FacesSevlet。它是整个应用
+的前端控制器。所有的请求都通过FacesServlet来处理：
+┌────────────────────────────────────────────────┐
+│<?xml version="1.0" encoding="UTF-8"?>          │
+│<web-app xmlns="http://java.sun.com/xml/ns/j2ee"│
+│xmlns:xsi="http://www.w3.org/2001/              │
+│XMLSchema-instance" xsi:schemaLocation="http:// │
+│java.sun.com/xml/ns/j2ee http://java.sun.com/xml│
+│/ns/j2ee/web-app_2_4.xsd" version="2.4">        │
+│ <display-name>guessNumber</display-name>       │
+│ <servlet>                                      │
+│    <servlet-name>Faces Servlet</servlet-name>  │
+│    <servlet-class>                             │
+│javax.faces.webapp.FacesServlet</servlet-class> │
+│    <load-on-startup>1</load-on-startup>        │
+│ </servlet>                                     │
+│ <servlet-mapping>                              │
+│    <servlet-name>Faces Servlet</servlet-name>  │
+│    <url-pattern>*.faces</url-pattern>          │
+│ </servlet-mapping>                             │
+│</web-app>                                      │
+└────────────────────────────────────────────────┘
+在上面的定义中，我们将所有.faces的请求交由
+FaceServlet来处理，FaceServlet会唤起相对的.jsp网页
+，例如请求是/index.faces的话，则实际上会唤起/
+index.jsp网页，完成以上的配置，您就可以开始使用JSF
+了。
+2)   JSF应用配置：
+       JSF的应用配置文件提供了对整个应用的相关信息
+的“地图”，它处理诸如导航规则、受管Bean、国际化等。
+这个文件就放置在应用程序的WEB-INF目录下。
+ 
+五、 示例及分析：
+示例要求：要求用户猜一个0到10之间的数字，第二页告
+诉用户猜的是否正确，要求检查用户输入的合法性。
+步骤：
+1.    创建一名为guessNumber的web应用程序。按“设置
+JSF环境”准备好JSF库。
+2.    创建受管Bean(或叫后台Bean)：
+┌────────────────────────────────────────────────┐
+│package chapter5;                               │
+│                                                │
+│import java.util.Random;                        │
+│                                                │
+│public class UserNumberBean {                   │
+│    /**　用户输入的数字 */                      │
+│    private int userNumber = 0;                 │
+│    /** 正确答案数字 */                         │
+│    private int keyNumber = 0;                  │
+│    /** 最小值 */                               │
+│    private int minNum = 0;                     │
+│    /** 最大值 */                               │
+│    private int maxNum = 10;                    │
+│    /** 回应客户的信息字符串 */                 │
+│    private String responseStr;                 │
+│                                                │
+│    public UserNumberBean() {                   │
+│         Random random = new Random();          │
+│         keyNumber = random.nextInt(10);        │
+│         System.out.println("正确数字是：" +    │
+│keyNumber);                                     │
+│    }                                           │
+│                                                │
+│    public int getUserNumber() {                │
+│        return userNumber;                      │
+│    }                                           │
+│                                                │
+│    public int getKeyNumber() {                 │
+│        return keyNumber;                       │
+│    }                                           │
+│                                                │
+│    public int getMaxNum() {                    │
+│        return maxNum;                          │
+│    }                                           │
+│                                                │
+│    public int getMinNum() {                    │
+│        return minNum;                          │
+│    }                                           │
+│                                                │
+│    public String getResponseStr() {            │
+│        if(userNumber == keyNumber){            │
+│            return "您真聪明，您猜对了！";      │
+│        }else{                                  │
+│            return "对不起，您猜错了！不是"+    │
+│userNumber +"!";                                │
+│        }                                       │
+│    }                                           │
+│                                                │
+│    public void setUserNumber(int userNumber) { │
+│        this.userNumber = userNumber;           │
+│    }                                           │
+│                                                │
+│    public void setKeyNumber(int keyNumber) {   │
+│        this.keyNumber = keyNumber;             │
+│    }                                           │
+│                                                │
+│    public void setMaxNum(int maxNum) {         │
+│        this.maxNum = maxNum;                   │
+│    }                                           │
+│                                                │
+│    public void setMinNum(int minNum) {         │
+│        this.minNum = minNum;                   │
+│    }                                           │
+│                                                │
+│    public void setResponseStr(String           │
+│responseStr) {                                  │
+│        this.responseStr = responseStr;         │
+│    }                                           │
+│}                                               │
+└────────────────────────────────────────────────┘
+受管Bean充当控制器的角色：通常它包含想要从用户处收
+集的属性，以及处理这些属性、操纵UI和执行其他一些应
+用处理的监听器方法。即它接收用户提交的数据，然后调
+用相应的模型的业务方法来处理用户的请求。
+3.    在JSF的配置文件faces-config.xml(该文件放置在
+WEB-INF下)中配置受管理的后台Bean：
+┌────────────────────────────────────────────────┐
+│<?xml version="1.0" encoding="UTF-8"?>          │
+│<!DOCTYPE faces-config PUBLIC                   │
+│"-//Sun Microsystems, Inc.//DTD JavaServer Faces│
+│Config 1.1//EN"                                 │
+│"http://java.sun.com/dtd/                       │
+│web-facesconfig_1_1.dtd">                       │
+│<faces-config xmlns="http://java.sun.com/JSF/   │
+│Configuration">                                 │
+│                                                │
+│<managed-bean>                                  │
+│    <managed-bean-name[q1] >UserNumberBean</    │
+│managed-bean-name>                              │
+│ <managed-bean-class[q2] >                      │
+│chapter5.UserNumberBean</managed-bean-class>    │
+│    <managed-bean-scope[q3] >session</          │
+│managed-bean-scope>                             │
+│ </managed-bean>                                │
+│</faces-config>                                 │
+└────────────────────────────────────────────────┘
+ 
+4.    开发基于JSF的用户界面：
+建立JSP页面，使用定制标签表示将作为HTML元素用的JSF
+组件。
+第一个页面：猜数页面guess.jsp：
+┌────────────────────────────────────────────────┐
+│<%@ page contentType="text/html; charset=GBK" %>│
+│<%@ taglib uri="http://java.sun.com/jsf/core"   │
+│prefix="f" %>                                   │
+│<%@ taglib uri="http://java.sun.com/jsf/html"   │
+│prefix="h" %>                                   │
+│<html>                                          │
+│<head>                                          │
+│<title>猜数字</title>                           │
+│</head>                                         │
+│<body bgcolor="#ffffff">                        │
+│<f:view>                                        │
+│ <h:form id="helloForm">                        │
+│    <h2>请猜一个<h:outputText value="#          │
+│{UserNumberBean.minNum}" />                     │
+│    至<h:outputText value="#                    │
+│{UserNumberBean.maxNum}" />的数字</h2>          │
+│                                                │
+│<h:inputText id="userNo"                        │
+│ value="#{UserNumberBean.userNumber}">          │
+│     <f:validateLongRange minimum="#            │
+│{UserNumberBean.minNum}"                        │
+│ maximum="#{UserNumberBean.maxNum}" />          │
+│    </h:inputText>                              │
+│                                                │
+│<h:commandButton id="submit" action="success"   │
+│value="提交" />                                 │
+│<br/>                                           │
+│                                                │
+│    <h:message style="color:red;" id="errors1"  │
+│for="userNo"/>                                  │
+│ </h:form>                                      │
+│</f:view>                                       │
+│</body>                                         │
+│</html>                                         │
+└────────────────────────────────────────────────┘
+第二个页面：结果页面response.jsp：
+┌────────────────────────────────────────────────┐
+│<%@ page contentType="text/html; charset=GBK" %>│
+│<%@ taglib uri="http://java.sun.com/jsf/core"   │
+│prefix="f" %>                                   │
+│<%@ taglib uri="http://java.sun.com/jsf/html"   │
+│prefix="h" %>                                   │
+│<html>                                          │
+│<head>                                          │
+│<title>结果</title>                             │
+│</head>                                         │
+│<body bgcolor="#ffffff">                        │
+│<f:view>                                        │
+│ <h:form id="responseForm">                     │
+│    <h2>                                        │
+│     <h:outputText id="result" value="#         │
+│{UserNumberBean.responseStr}" />                │
+│    </h2>                                       │
+│                                                │
+│    <h:commandButton id="back" value="返回"     │
+│action="success" />                             │
+│ </h:form>                                      │
+│</f:view>                                       │
+│</body>                                         │
+│</html>                                         │
+└────────────────────────────────────────────────┘
+ 
+5.    编写事件监听器或者导航规则：
+l 编写事件监听器来决定事件发生时应该有的反应。比如
+用户单击一个按钮或提交了表单。如果没有事件监听器，
+在这一步定义页面导航规则。
+l 导航规则涉及到定义应用程序中各种页面的跳转。
+本例是配置导航规则：在faces-config.xml文件中：
+┌────────────────────────────────────────────────┐
+│<?xml version="1.0" encoding="UTF-8"?>          │
+│<!DOCTYPE faces-config PUBLIC "-//Sun           │
+│Microsystems, Inc.//DTD JavaServer Faces Config │
+│1.1//EN" "http://java.sun.com/dtd/              │
+│web-facesconfig_1_1.dtd">                       │
+│<faces-config xmlns="http://java.sun.com/JSF/   │
+│Configuration">                                 │
+│ <managed-bean>                                 │
+│    <managed-bean-name>UserNumberBean</         │
+│managed-bean-name>                              │
+│   <managed-bean-class>chapter5.UserNumberBean</│
+│managed-bean-class>                             │
+│    <managed-bean-scope>session</               │
+│managed-bean-scope>                             │
+│ </managed-bean>                                │
+│                                                │
+│<navigation-rule>                               │
+│    <from-view-id[q4] >/guess.jsp</from-view-id>│
+│    <navigation-case[q5] >                      │
+│      <from-outcome[q6] >success</from-outcome> │
+│      <to-view-id[q7] >/response.jsp</          │
+│to-view-id>                                     │
+│    </navigation-case>                          │
+│ </navigation-rule>                             │
+│                                                │
+│ <navigation-rule>                              │
+│    <from-view-id>/response.jsp</from-view-id>  │
+│    <navigation-case>                           │
+│      <from-outcome>success</from-outcome>      │
+│      <to-view-id>/guess.jsp</to-view-id>       │
+│    </navigation-case>                          │
+│ </navigation-rule>                             │
+│</faces-config>                                 │
+└────────────────────────────────────────────────┘
+第一个导航规则可以这样理解：从guess.jsp页面出发有
+个导航规则，它有一个导航案例：就是当结果为
+“successs”时导航到response.jsp。
+注：在导航时，预设都是使用forward的方式，您可以在
+<navigation-case>中加入一个<redirect/>子元素，让
+JSF发送HTTP重定向到新的视图。
+6.    部署、运行、调试：
+ [jsf_ch1_3]
+ 
+ [jsf_ch1_4]
+[jsf_ch1_5]
+ 
+六、 JSF的用户界面组件模型：
+JavaServer Faces 的真正威力在于它的用户界面组件模
+型。在该模型中，应用程序完全用组件集合构建，这些组
+件可以针对多种客户端类型用不同的方式来进行显示。
+JSF的用户界面组件模型由UI组件类、显示模型、事件模
+型、数据置换模型以及数据验证模型组成。
+1．   UI组件类：与其他专有技术（如 ASP.Net）有点类
+似，JSF 的 UI 组件模型技术使开发人员能够使用预先构
+建的用户界面 (UI) 组件来构建 Web 用户界面（而非完
+全从头构建用户界面），从而提供了前所未有的开发效率
+。JSF UI 组件有多种形式，可以简单到只是显示文本的
+outputLabel，或者复杂到可以表示来自数据集合（如数
+据库表）的表格化数据的 dataTable。
+JavaServer Faces 规范在其参考实施中提供了一组基本
+UI 组件，这些组件本身是非常有用的。它们包括两个组
+件库：
+l “HTML”组件库 — 它大部分映射了标准的 HTML 输入元
+素。
+l “Core”组件库 — 它辅助常见的应用程序开发任务（如
+，国际化和验证/转换输入数据）。
+如果在JSP页面中使用HTML和Core组件库，必须在JSP页面
+中包含下列的taglib指令。
+┌────────────────────────────────────────────────┐
+│<%@ taglib uri="http://java.sun.com/jsf/core"   │
+│prefix="f" %>                                   │
+│<%@ taglib uri="http://java.sun.com/jsf/html"   │
+│prefix="h" %>                                   │
+└────────────────────────────────────────────────┘
+ 
+除了提供一个基本 UI 组件库之外，JSF API 还提供了扩
+展和创建定制 JSF UI 组件的功能，从而在基本组件之上
+提供更多功能。
+ 
+2．   组件显示模型：组件的功能通常围绕着两个动作：
+解码和编码数据。解码是把进入的请求参数转换成组件的
+值的过程。编码是把组件的当前值转换成对应的标签（也
+就是HTML）的过程。
+组件显示功能有两种工作实现方式：
+l 直接实现：组件自己实现解码和编码。
+l 委托实现：组件委托呈现器进行解码和编码。
+3．   数据转换模型：提供了各和类和接口，使JSF页面
+中的文本数据能够转换成原始数据类型。将数据从视图到
+模型和从模型到视图的所有转换都是由转换模型处理的。
+4．   事件和监听器模型：JSF实现由事件和监听器类组
+成。每当JSF组件激发事件时，就会创建一个事件对象（
+事件对象包含的信息有页面中哪个组件生成了事件等），
+而后JSF将调用相应监听器的方法来捕获事件。由JSF组件
+激发的两个最常见事件是动作事件和值更改事件。
+动作事件在组件（按钮和链接）被激活时触发。当用户更
+改组件（如复选框）的值时将激发值更改事件。
+要使组件能够响应动作事件或值更改事件。应用程序可以
+使用以下技术之一：
+3)   实现事件监听器类以处理事件和在组件上注册事件
+：
+4)   在后台Bean的方法中实现事件处理，并在组件的方
+法绑定表达式中引用此方法。
+5．   验证模型：JSF提供了各种类来验证在JSF页面上各
+个控件中包含的数据。此验证在更新模型中的数据之前进
+行。使用这些标签进行的验证包括：检查字段中文本的长
+度和检查字段值是否在指定的范围内等。JSF提供了三种
+内建验证器，即：<f:validateDoubleRange>、
+<f:validateLongRange>、<f:validateLength>。使用这
+些验证器的方法是将它们嵌入到组件标签内，代码如下所
+示：
+┌────────────────────────────────────────────────┐
+│<h:inputText id="userNo" value="#               │
+│{UserNumberBean.userNumber}">                   │
+│   <f:validateLongRange minimum="#              │
+│{UserNumberBean.minNum}"                        │
+│maximum="#{UserNumberBean.maxNum}" />           │
+│</h:inputText>                                  │
+└────────────────────────────────────────────────┘
+     
+ 
+ 
+ 
+这段代码要求userNo文本字段中所输入的值要在指定的最
+小值和最大值之间。
+阅读更多
+想对作者说点什么？我来说一句
+ 
+
+JSF 标签大全（非常详细有例子）
+
+qq_27629199 qq_27629199
+
+03-28 599
+
+1. JSF入门藉由以下的几个主题，可以大致了解JSF的轮
+廓与特性，我们来看看网页设计人员与应用程序设计人员
+各负责什么。1.1简介JSFWeb应用程序的开发与传统的单
+机程序开发在本质上存在着太多的差异...
+
+ 
+
+JSF教程（1）——简介 + HelloWorld
+
+beijiguangyong beijiguangyong
+
+03-29 1.3万
+
+在写第一个HelloWorld之前先来宏观的了解一下JSF，也
+许你之前使用过Struts（1或者2），SpringMVC，甚至于
+直接采用JSP+Servelet开发过web层。JSF与这些最大的不
+同是...
+
+ 
+
+JSF 原理简要介绍
+
+lishuangzhe7047 lishuangzhe7047
+
+11-26 5399
+
+JSF（Java Server Faces）的本质也是Servlet，只不过
+实现Servlet的方式不同而已。那到底JSF是怎样的
+Servlet呢，有比较才会有不同。总结相同，区分不同。
+首先，JS...
+
+ 
+
+JSF是什么。作用是啥
+
+qq_29347295 qq_29347295
+
+11-04 7456
+
+jsf是一种web框架，其实我也没有用过，这是我很久之前
+在网上看到的一种框架，当时大致简单的了解一下 jsf常
+用来和struts对比，struts是一种mvc框架，jsf是一种事
+件驱动的框架。 ...
+
+ 
+
+JSF服务框架初识
+
+MonkeyITBoy MonkeyITBoy
+
+05-23 827
+
+京东的JSF1.是什么？JSF（杰夫）是一个高性能的服务框
+架，特性如下：可以进行高效RPC（远程过程）调用有高
+可用的注册中心，完备的容灾特性服务端口同时支持TCP
+与HTTP协议调用，支持跨语言调用支持...
+
+ 
+
+JSF----------基础知识初解
+
+zzg19950824 zzg19950824
+
+03-24 3013
+
+初次学习JSF,对其基础进行了一些学习与整理。 JSF
+(JavaServer Faces)它是一个基于服务器端组件的用户界
+面框架。它用于开发Web应用程序。它提供了一个定义良
+好的编程模型，由丰富...
+
+ 
+
+创建JSF项目及一个简单的JSF项目
+
+zhengyikuangge zhengyikuangge
+
+04-06 1950
+
+1、创建JSF项目我使用的是myeclipse开发工具①新建一个
+web项目②在项目上右键——Myeclipse——Add JSF
+Capabilities 完成后项目结构如下图所示： jsf所需
+的...
+
+ 
+
+jsf
+
+longchao2 longchao2
+
+07-24 611
+
+接口的设计原则： 1.参数类型尽量简单 2.传输数据量尽
+量少 3.每次RPC（远程调用）保证原子性，尽量减少在一
+个事务中发起的RPC调用，检查RPC调用的返回值或异常
+4.保证关键接口的幂等性（多次访...
+
+ 
+
+JSF------基础使用篇－－－－－框架搭建
+
+zzg19950824 zzg19950824
+
+03-30 1521
+
+不同于上一篇，这一篇主要是对JSF的实际操作，这里选
+用的IDE工具还是MyEclipse。这一篇从头到尾实现一个
+JSF项目，持久层使用Hibernate，这个持久框架太久没用
+了，所以转载一篇复习一...
+
+ 
+
+JSF事件机制（一）
+
+cd18333612683 cd18333612683
+
+05-15 998
+
+前言JSF模拟了传统的C/S编程模式，它隐藏了传统Web变
+成的请求——响应通信模式，而是模拟了C/S变成中的事件
+通信机制。今天就了解一下JSF的事件机制事件机制概述
+在JSF（一）中提到了，JSF的标签...
+
+相关热词
+
+jsf和 jsf简介 jsf接口 jsf面试 jsf单点登陆
+
+博主推荐
+
+换一批
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+[3_qjyong]
+
+qjyong
+
+关注
+
+原创
+    130
+
+粉丝
+    1023
+
+喜欢
+    33
+
+评论
+    1141
+
+等级：
+     
+
+访问：
+    152万+
+
+积分：
+    1万+
+
+排名：
+    2491
+
+关注weibo动态
+
+最新文章
+
+  • 关于spring framework最新发布压缩包的下载问题【
+    非常非常新手帖】
+  • 使用Eclipse构建Maven项目 (step-by-step)
+  • 扎实基础，实战显身手--CSDN为大家推出免费经典实
+    战项目
+  • 准备转向ubuntu下做Java开发
+  • C2C、B2B、B2C解释（转）
+
+个人分类
+
+  • android 1篇
+  • CoreJava小结 10篇
+  • Hibernate3 15篇
+  • IDE相关 5篇
+  • Java EE 18篇
+  • Java SE 8篇
+  • JavaScript 9篇
+  • JSF 11篇
+  • Linux 2篇
+  • Lucene+Compass 1篇
+  • OpenSource 11篇
+  • Oracle教学小结 3篇
+  • Other 6篇
+  • Spring 5篇
+  • Struts2 9篇
+  • _原创书籍 5篇
+  • 其它 4篇
+  • 它山之石 2篇
+  • 数据库相关 4篇
+  • 生活感悟 1篇
+  • 设计模式之我见 2篇
+
+展开
+
+归档
+
+  • 2014年2月 1篇
+  • 2013年6月 1篇
+  • 2010年7月 1篇
+  • 2010年6月 1篇
+  • 2010年4月 4篇
+  • 2010年3月 1篇
+  • 2010年2月 1篇
+  • 2010年1月 2篇
+  • 2009年12月 2篇
+  • 2009年11月 6篇
+  • 2009年10月 8篇
+  • 2009年9月 15篇
+  • 2009年8月 3篇
+  • 2009年3月 2篇
+  • 2009年2月 1篇
+  • 2009年1月 1篇
+  • 2008年12月 5篇
+  • 2008年11月 3篇
+  • 2008年10月 1篇
+  • 2008年9月 2篇
+  • 2008年8月 4篇
+  • 2008年7月 3篇
+  • 2008年6月 6篇
+  • 2008年5月 1篇
+  • 2008年3月 3篇
+  • 2008年2月 4篇
+  • 2008年1月 2篇
+  • 2007年12月 3篇
+  • 2007年11月 2篇
+  • 2007年10月 19篇
+  • 2007年9月 3篇
+  • 2007年8月 2篇
+  • 2007年7月 2篇
+  • 2007年6月 2篇
+  • 2007年5月 1篇
+  • 2007年4月 2篇
+  • 2006年12月 5篇
+  • 2006年11月 25篇
+
+展开
+
+热门文章
+
+  • 使用Eclipse构建Maven项目 (step-by-step)
+
+    阅读量：428144
+
+  • 理解ThreadLocal
+
+    阅读量：197074
+
+  • Web Service学习笔记
+
+    阅读量：132004
+
+  • Struts2拦截器
+
+    阅读量：45716
+
+  • JSF简介
+
+    阅读量：34801
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    4
+   
+  • 评论
+
+    5
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

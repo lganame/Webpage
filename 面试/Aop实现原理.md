@@ -1,6 +1,6 @@
-Spring AOP 实现原理
+#Spring AOP 实现原理#
 
-个人分类： spring
+ ##个人分类： spring
 
 ###什么是AOP
 
@@ -73,16 +73,16 @@ Transactions 事务
 
 AOP相关概念
 
-方面（Aspect）：一个关注点的模块化，这个关注点实现可能另外横切多个对象。事务管
+**方面（Aspect）**：一个关注点的模块化，这个关注点实现可能另外横切多个对象。事务管
 理是J2EE应用中一个很好的横切关注点例子。方面用Spring的 Advisor或拦截器实现。
 
  
 
-连接点（Joinpoint）: 程序执行过程中明确的点，如方法的调用或特定的异常被抛出。
+**连接点（Joinpoint）**: 程序执行过程中明确的点，如方法的调用或特定的异常被抛出。
 
  
 
-通知（Advice）: 在特定的连接点，AOP框架执行的动作。各种类型的通知包括“around”、
+**通知（Advice）**: 在特定的连接点，AOP框架执行的动作。各种类型的通知包括“around”、
 “before”和“throws”通知。通知类型将在下面讨论。许多AOP框架包括Spring都是以拦截器
 做通知模型，维护一个“围绕”连接点的拦截器链。Spring中定义了四个advice:
 BeforeAdvice, AfterAdvice, ThrowAdvice和DynamicIntroductionAdvice
@@ -97,34 +97,28 @@ MethodMatcher和ClassFilter，可以通过名字很清楚的理解， MethodMatc
 
  
 
-引入（Introduction）: **添加方法或字段**到被通知的类。 Spring允许引入新的接口到任何
+**引入（Introduction）**: **添加方法或字段**到被通知的类。 Spring允许引入新的接口到任何
 被通知的对象。例如，你可以使用一个引入使任何对象实现 **IsModified接口**，来简化缓存
 。Spring中要使用Introduction, 可有通过**DelegatingIntroductionInterceptor**来实现通
 知，通过**DefaultIntroductionAdvisor**来配置Advice和代理类要实现的接口
 
  
 
-目标对象（Target Object）: 包含连接点的对象。也被称作被通知或被代理对象。POJO
+**目标对象（Target Object）**: 包含连接点的对象。也被称作被通知或被代理对象。POJO
 
  
 
-AOP代理（AOP Proxy）: **AOP框架创建的对象，包含通知**。在Spring中，AOP代理可以是JDK
+**AOP代理（AOP Proxy）**: **AOP框架创建的对象，包含通知**。在Spring中，AOP代理可以是JDK
 动态代理或者CGLIB代理。
 
  
 
-织入（Weaving）: **组装方面来创建一个被通知对象。这可以在编译时完成（例如使用
+**织入（Weaving）**: **组装方面来创建一个被通知对象。这可以在编译时完成（例如使用
 AspectJ编译器），也可以在运行时完成。Spring和其他纯Java AOP框架一样，在运行时完
 成织入。**
 
 
-Spring AOP组件
-
-下面这种类图列出了Spring中主要的AOP组件
-
-[SouthEast]
-
-如何使用Spring AOP
+##如何使用Spring AOP##
 
 
 可以通过配置文件或者编程的方式来使用Spring AOP。
@@ -433,275 +427,5 @@ public Object proceed() throws Throwable {
 
 
 
-END
 
-============
-
-By Kevin Fan
-
- 
-
-阅读更多登录后自动展开
-想对作者说点什么？我来说一句
- 
-
-Spring AOP 原理（面试必备）
-
-L_BestCoder L_BestCoder
-
-02-13 3672
-
-一、AOP是什么？    AOP的全称是Aspect Orient Programming，即面向切面编程。是对
-OOP（Object Orient Programming）的一种补充，战门用于处理一些...
-
- 
-
-Spring实现AOP的4种方式
-
-udbnny udbnny
-
-09-08 21.4万
-
-Spring实现AOP的4种方式   先了解AOP的相关术语:1.通知(Advice):通知定义了切面是什
-么以及何时使用。描述了切面要完成的工作和何时需要执行这个工作。2.连接点
-(Joinpoint)...
-
- 
-
-关于 Spring AOP (AspectJ) 你该知晓的一切
-
-javazejian javazejian
-
-02-21 4.6万
-
-【版权申明】未经博主同意，谢绝转载！（请尊重原创，博主保留追究权） http://
-blog.csdn.net/javazejian/article/details/54629058 出自【...
-
- 
-
-Spring IOC和AOP 原理彻底搞懂
-
-luoshenhappy99 luoshenhappy99
-
-08-16 11.8万
-
-Spring提供了很多轻量级应用开发实践的工具集合，这些工具集以接口、抽象类、或工具
-类的形式存在于Spring中。通过使用这些工具集，可以实现应用程序与各种开源技术及框
-架间的友好整合。比如有关jdbc...
-
- 
-
-深入理解Spring的两大特征（IOC和AOP）
-
-gloomy_114 gloomy_114
-
-04-05 4.3万
-
-众所周知，Spring的核心特性就是IOC和AOP，IOC（Inversion of Control），即“控制反
-转”；AOP（Aspect-OrientedProgramming），即“面向切面编程...
-
- 
-
-AOP——SpringAOP（最重要）
-
-qq_16605855 qq_16605855
-
-06-19 1.4万
-
-http://www.cnblogs.com/solverpeng/p/5628100.html 一、AOP: 是对OOP编程方式的一种
-补充。翻译过来为“面向切面编程”。可以理解为一个拦截...
-
- 
-
-Spring总结（五）--Spring中使用AOP三种方式
-
-u014206695 u014206695
-
-03-12 1.2万
-
-第一种实现的方式：通过Spring的API实现AOP。第一步： public interface UserService
-{ public void add(); public vo...
-
- 
-
-Spring AOP是什么意思，通俗讲解
-
-ios_xumin ios_xumin
-
-11-07 4822
-
-切面编程，就是在你项目原有的功能基础上，通过AOP去添加新的功能，这些功能是建立在
-原有功能的基础上的，而且原有的功能并不知道你已经添加了新的功能。比如说，你去ATM
-取钱，取钱是一个功能，取完钱后向你的...
-
- 
-
-SpringAOP概念及其使用
-
-wqh8522 wqh8522
-
-06-06 1392
-
-什么是AOPAOP（Aspect Oriented Programming 面向切面编程），通过预编译方式和运行
-期动态代理实现程序功能的统一维护的一种技术。AOP是OOP的延续，是软件开发中的一个
-热点...
-
- 
-
-springAop
-
-xingzhishen xingzhishen
-
-08-21 499
-
-一、       Introduction 在软件业，AOP为Aspect Oriented Programming的缩写，意为
-：面向切面编程，通过预编译方式和运行期动态代理实现程序功能的统一维护的...
-
-相关热词
-
-和spring spring与下spring spring的 spring和
-[feedLoadin]
-
-没有更多推荐了，返回首页
-
-个人资料
-
-[3_moreevan]
-
-moreevan
-
-关注
-
-原创
-    56
-
-粉丝
-    267
-
-喜欢
-    45
-
-评论
-    138
-
-等级：
-     
-
-访问：
-    66万+
-
-积分：
-    3506
-
-排名：
-    1万+
-
-最新文章
-
-  • jdk动态代理实现原理
-  • IO读取速度测试
-  • 深入理解 java I/O
-  • Tuning Java I/O Performance
-  • ubuntu 12 中文输入法的安装
-
-个人分类
-
-  • java 34篇
-  • android 13篇
-  • spring 3篇
-  • servlet&jsp 1篇
-  • data structure & algo 4篇
-  • design patterns 1篇
-  • job 9篇
-  • c++ 2篇
-  • linux 3篇
-  • hardware 1篇
-  • windows 1篇
-
-展开
-
-归档
-
-  • 2013年9月 2篇
-  • 2012年11月 3篇
-  • 2012年10月 2篇
-  • 2012年9月 2篇
-  • 2012年4月 4篇
-  • 2012年3月 7篇
-  • 2012年2月 1篇
-  • 2012年1月 1篇
-  • 2011年12月 1篇
-  • 2011年11月 3篇
-  • 2011年9月 9篇
-  • 2011年8月 20篇
-  • 2011年7月 10篇
-  • 2011年6月 2篇
-  • 2011年4月 5篇
-  • 2011年3月 3篇
-
-展开
-
-热门文章
-
-  • Spring AOP 实现原理
-
-    阅读量：405034
-
-  • java 类的初始化
-
-    阅读量：27748
-
-  • java.lang.LinkageError: loader constraint violation
-
-    阅读量：20714
-
-  • Activity的四种LaunchMode(写的真心不错，建议大家都看看)
-
-    阅读量：18667
-
-  • 详解java序列化（一）
-
-    阅读量：17971
-
-最新评论
-
-  • Spring AOP 实现原理
-
-    qq_26323323：推荐下自己的文章 https://blog.csdn.net/qq_26323323/articl...
-
-  • Spring AOP 实现原理
-
-    qq_38663729：[reply]baidu_31945865[/reply] 汝秀也！
-
-  • Spring AOP 实现原理
-
-    baidu_31945865：[reply]Monkey_D_Jie[/reply] 同九义，何汝秀？
-
-  • Spring AOP 实现原理
-
-    weixin_39598667：卧槽，笑死我了。。。
-
-  • java.lang.Linkage...
-
-    u010291448：好用了，贼鸡儿强! &lt;scope&gt;provid...
-
-登录
-注册
-
-  • 点赞取消点赞
-   
-    153
-   
-  • 评论
-
-    52
-
-  • 目录
-  • 收藏
-  •  手机看
-  • 上一篇
-  • 
-    [2016080217]
-  • 更多
-      □ 上一篇
 

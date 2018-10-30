@@ -1,0 +1,295 @@
+  • 百度首页
+
+网页新闻贴吧知道音乐图片视频地图文库百科
+ 
+[POI                 ]进入词条全站搜索帮助
+  • 清除历史记录关闭
+
+声明：百科词条人人可编辑，词条创建和修改均免费，绝不存在官方及代理商付费代编，
+请勿上当受骗。详情>>
+
+首页
+    历史上的今天
+    百科冷知识
+    图解百科
+
+分类
+    艺术
+    科学
+    自然
+    文化
+    地理
+    生活
+    社会
+    人物
+    经济
+    体育
+    历史
+
+特色百科
+    数字博物馆
+    非遗百科
+    多肉百科
+    恐龙百科
+    城市百科
+    二战百科
+
+用户
+    蝌蚪团
+    燃梦计划
+    百科任务
+    百科商城
+
+权威合作
+    合作模式
+    常见问题
+    联系方式
+
+手机百科
+    网页版
+
+个人中心
+POI是一个多义词，请在下列义项上选择浏览（共8个义项）
+添加义项
+
+  • ▪“兴趣点”的缩写
+  • ▪美剧2011年迈克尔·爱默生主演的电视剧
+  • ▪Apache POI
+  • ▪波兰信息学竞赛
+  • ▪通信系统
+  • ▪道路收费站标注计划
+  • ▪驱逐舰夕立的口癖
+  • ▪PolyKid制作发行的游戏
+
+ 
+收藏
+查看我的收藏
+0 有用+1 已投票
+0
+
+  •  
+  •  
+  •  
+  •  
+
+    POI
+
+    （Apache POI）
+
+    编辑锁定
+
+Apache POI是Apache软件基金会的开放源码函式库，POI提供API给Java程序对Microsoft
+Office格式档案读和写的功能。
+
+中文名
+    POI
+HDGF
+    提供读写Microsoft Visio
+
+XSSF
+    提供读写Microsoft Excel OOXML
+结    构
+    HSSF 
+
+目录
+
+ 1. 1 基本功能
+ 2. 2 范文演示
+
+POI基本功能
+
+编辑
+结构：
+HSSF －提供读写Microsoft Excel格式档案的功能。
+XSSF －提供读写Microsoft Excel OOXML格式档案的功能。
+HWPF －提供读写Microsoft Word格式档案的功能。
+HSLF －提供读写Microsoft PowerPoint格式档案的功能。
+HDGF －提供读写Microsoft Visio格式档案的功能。
+
+POI范文演示
+
+编辑
+创建Excel 文档
+示例1将演示如何利用Jakarta POI API 创建Excel 文档。
+示例1程序如下：
+
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import java.io.FileOutputStream;
+public class CreateXL {
+    /** Excel 文件要存放的位置，假定在D盘下*/
+    public static String outputFile = "D:\\test.xls";
+    public static void main(String argv[]) {
+        try {
+            // 创建新的Excel 工作簿
+            HSSFWorkbook workbook = new HSSFWorkbook();
+            // 在Excel工作簿中建一工作表，其名为缺省值
+            // 如要新建一名为"效益指标"的工作表，其语句为：
+            // HSSFSheet sheet = workbook.createSheet("效益指标");
+            HSSFSheet sheet = workbook.createSheet();
+            // 在索引0的位置创建行（最顶端的行）
+            HSSFRow row = sheet.createRow((short)0);
+            //在索引0的位置创建单元格（左上端）
+            HSSFCell cell = row.createCell((short)0);
+            // 定义单元格为字符串类型
+            cell.setCellType(HSSFCell.CELL_TYPE_STRING);//已过时
+            // 在单元格中输入一些内容
+            cell.setCellValue("增加值");
+            // 新建一输出文件流
+            FileOutputStream fOut = new FileOutputStream(outputFile);
+            // 把相应的Excel 工作簿存盘
+            workbook.write(fOut);
+            fOut.flush();
+            // 操作结束，关闭文件
+            fOut.close();
+            System.out.println("文件生成...");
+        } catch (Exception e) {
+            System.out.println("已运行 xlCreate() : " + e);
+        }
+    }
+}
+
+读取Excel文档中的数据
+示例2将演示如何读取Excel文档中的数据。假定在D盘JTest目录下有一个文件名为
+test1.xls的Excel文件。
+示例2程序如下：
+
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import java.io.FileInputStream;
+public class ReadXL {
+    /** Excel文件的存放位置。注意是反斜线*/
+    public static String fileToBeRead = "D:\\test1.xls";
+    public static void main(String argv[]) {
+        try {
+            // 创建对Excel工作簿文件的引用
+            HSSFWorkbook workbook = new HSSFWorkbook(new FileInputStream(fileToBeRead));
+            // 创建对工作表的引用。
+            // 本例是按名引用（让我们假定那张表有着缺省名"Sheet1"）
+            HSSFSheet sheet = workbook.getSheet("Sheet1");
+            // 也可用getSheetAt(int index)按索引引用，
+            // 在Excel文档中，第一张工作表的缺省索引是0，
+            // 其语句为：HSSFSheet sheet = workbook.getSheetAt(0);
+            // 读取左上端单元
+            HSSFRow row = sheet.getRow(0);
+            HSSFCell cell = row.getCell((short)0);
+            // 输出单元内容，cell.getStringCellValue()就是取所在单元的值
+            System.out.println("左上端单元是： " + cell.getStringCellValue());
+        } catch (Exception e) {
+            System.out.println("已运行xlRead() : " + e);
+        }
+    }
+}
+
+设置单元格格式
+在这里，我们将只介绍一些和格式设置有关的语句，我们假定workbook就是对一个工作簿
+的引用。在Java中，第一步要做的就是创建和设置字体和单元格的格式，然后再应用这些
+格式：
+1、创建字体，设置其为红色、粗体：
+
+HSSFFont font = workbook.createFont();
+font.setColor(HSSFFont.COLOR_RED);
+font.setBoldweight(HSSFFont.BOLDWEIGHT_BOLD);
+
+2、创建格式
+
+HSSFCellStyle cellStyle= workbook.createCellStyle();
+cellStyle.setFont(font);
+
+3、应用格式
+
+HSSFCell cell = row.createCell((short) 0);
+cell.setCellStyle(cellStyle);
+cell.setCellType(HSSFCell.CELL_TYPE_STRING);
+cell.setCellValue("标题 ");
+
+处理WORD文档
+
+import java.io. * ;
+import org.apache.poi.hwpf.extractor.WordExtractor;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+public class TestPoi {
+    public TestPoi() {}
+    public static void main(String args[])throws Exception{
+        FileInputStream in = new FileInputStream("D:\\a.doc");
+        WordExtractor extractor = new WordExtractor();
+        String str = extractor.extractText(in);
+        //System.out.println("the result length is"+str.length());
+        System.out.println(str);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+词条标签：
+    科学
+    [96dda144ad] 图集
+    POI图册
+    V百科往期回顾
+
+    词条统计
+          ☆ 浏览次数：次
+          ☆ 编辑次数：15次历史版本
+          ☆ 最近更新：该带你懂吗（2017-08-17）
+
+    1 基本功能
+    2 范文演示  
+
+      
+      
+   
+    猜你关注
+
+    新手上路
+        成长任务
+        编辑入门
+        编辑规则
+        本人编辑new
+
+    我有疑问
+        我要质疑
+        在线客服
+        参加讨论
+        意见反馈
+
+    投诉建议
+        举报不良信息
+        未通过词条申诉
+        投诉侵权信息
+        封禁查询与解封
+
+    ©2018 Baidu 使用百度前必读 | 百科协议 | 隐私政策 | 百度百科合作平台 | 京ICP
+    证030173号 ●
+
+    京公网安备11000002000001号
+
+     
+    [POI                 ]进入词条
+      □ 清除历史记录关闭
+    编辑收藏赞
+    登录
+    分享
+        
+    分享到微信朋友圈
+    打开微信“扫一扫”即可将网页分享至朋友圈

@@ -1,0 +1,564 @@
+[]
+
+原
+
+ActiveMQ详细入门使用教程
+
+2018年01月22日 15:47:12 JHON_YUAN 阅读数：28239 标签： ActiveMQ centos spring
+个人分类： ActiveMQ
+
+ActiveMQ介绍
+
+     MQ是消息中间件，是一种在分布式系统中应用程序借以传递消息的媒介，常用的有
+ActiveMQ，RabbitMQ，kafka。ActiveMQ是Apache下的开源项目，完全支持JMS1.1和
+J2EE1.4规范的JMS Provider实现。
+特点：
+1、支持多种语言编写客户端
+2、对spring的支持，很容易和spring整合
+3、支持多种传输协议：TCP,SSL,NIO,UDP等
+4、支持AJAX
+消息形式：
+1、点对点（queue）
+2、一对多（topic）
+
+ActiveMQ安装
+
+这里写图片描述
+我这里提供一个安装好的虚拟机：http://download.csdn.net/download/liuyuanq123/
+10217892
+服务器运行后，我们可以直接访问到activeMQ的界面：
+这里写图片描述
+然后点击queues可以看到现在没有一条消息：
+这里写图片描述
+
+ActiveMQ测试
+
+
+      编写一个测试类对ActiveMQ进行测试，首先得向pom文件中添加ActiveMQ相关的jar
+包：
+
+     <dependency>
+         <groupId>org.apache.activemq</groupId>
+         <artifactId>activemq-all</artifactId>
+    </dependency>
+
+queue的发送代码如下:
+
+    public void testMQProducerQueue() throws Exception{
+        //1、创建工厂连接对象，需要制定ip和端口号
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://192.168.156.44:61616");
+        //2、使用连接工厂创建一个连接对象
+        Connection connection = connectionFactory.createConnection();
+        //3、开启连接
+        connection.start();
+        //4、使用连接对象创建会话（session）对象
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        //5、使用会话对象创建目标对象，包含queue和topic（一对一和一对多）
+        Queue queue = session.createQueue("test-queue");
+        //6、使用会话对象创建生产者对象
+        MessageProducer producer = session.createProducer(queue);
+        //7、使用会话对象创建一个消息对象
+        TextMessage textMessage = session.createTextMessage("hello!test-queue");
+        //8、发送消息
+        producer.send(textMessage);
+        //9、关闭资源
+        producer.close();
+        session.close();
+        connection.close();
+    }
+
+接收代码：
+
+    public void TestMQConsumerQueue() throws Exception{
+        //1、创建工厂连接对象，需要制定ip和端口号
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://192.168.156.44:61616");
+        //2、使用连接工厂创建一个连接对象
+        Connection connection = connectionFactory.createConnection();
+        //3、开启连接
+        connection.start();
+        //4、使用连接对象创建会话（session）对象
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        //5、使用会话对象创建目标对象，包含queue和topic（一对一和一对多）
+        Queue queue = session.createQueue("test-queue");
+        //6、使用会话对象创建生产者对象
+        MessageConsumer consumer = session.createConsumer(queue);
+        //7、向consumer对象中设置一个messageListener对象，用来接收消息
+        consumer.setMessageListener(new MessageListener() {
+
+            @Override
+            public void onMessage(Message message) {
+                // TODO Auto-generated method stub
+                if(message instanceof TextMessage){
+                    TextMessage textMessage = (TextMessage)message;
+                    try {
+                        System.out.println(textMessage.getText());
+                    } catch (JMSException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        //8、程序等待接收用户消息
+        System.in.read();
+        //9、关闭资源
+        consumer.close();
+        session.close();
+        connection.close();
+    }
+
+然后当我们运行queue发送的时候可以看到队列里已经有一条消息了，但没有发送出去：
+这里写图片描述
+然后在运行queue 的接收端，可以看到消息已经发出了：
+这里写图片描述
+这里写图片描述
+接着对topic进行测试，发送代码如下：
+
+    public void TestTopicProducer() throws Exception{
+        //1、创建工厂连接对象，需要制定ip和端口号
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://192.168.156.44:61616");
+        //2、使用连接工厂创建一个连接对象
+        Connection connection = connectionFactory.createConnection();
+        //3、开启连接
+        connection.start();
+        //4、使用连接对象创建会话（session）对象
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        //5、使用会话对象创建目标对象，包含queue和topic（一对一和一对多）
+        Topic topic = session.createTopic("test-topic");
+        //6、使用会话对象创建生产者对象
+        MessageProducer producer = session.createProducer(topic);
+        //7、使用会话对象创建一个消息对象
+        TextMessage textMessage = session.createTextMessage("hello!test-topic");
+        //8、发送消息
+        producer.send(textMessage);
+        //9、关闭资源
+        producer.close();
+        session.close();
+        connection.close();
+    }
+
+接收代码：
+
+    public void TestTopicConsumer() throws Exception{
+        //1、创建工厂连接对象，需要制定ip和端口号
+        ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://192.168.156.44:61616");
+        //2、使用连接工厂创建一个连接对象
+        Connection connection = connectionFactory.createConnection();
+        //3、开启连接
+        connection.start();
+        //4、使用连接对象创建会话（session）对象
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        //5、使用会话对象创建目标对象，包含queue和topic（一对一和一对多）
+        Topic topic = session.createTopic("test-topic");
+        //6、使用会话对象创建生产者对象
+        MessageConsumer consumer = session.createConsumer(topic);
+        //7、向consumer对象中设置一个messageListener对象，用来接收消息
+        consumer.setMessageListener(new MessageListener() {
+
+            @Override
+            public void onMessage(Message message) {
+                // TODO Auto-generated method stub
+                if(message instanceof TextMessage){
+                    TextMessage textMessage = (TextMessage)message;
+                    try {
+                        System.out.println(textMessage.getText());
+                    } catch (JMSException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        //8、程序等待接收用户消息
+        System.in.read();
+        //9、关闭资源
+        consumer.close();
+        session.close();
+        connection.close();
+    }
+
+然后运行topic发送：
+这里写图片描述
+可以看到消息已经发送出去。再运行topic接收：
+这里写图片描述
+可以看到有了一个消费者，但是没有接收的消息，这是因为正常情况下我们的topic消息不
+会再服务器持久化，所以要先打开消费者，再打开生产者，这个时候我们再运行生产者发
+送一条消息看到消息已经接收到了：
+这里写图片描述
+这里写图片描述
+
+ActiveMQ整合spring及项目中运用
+
+
+      activeMQ与spring看一整合到一起使用，除了添加ActiveMQ相关的jar包外，还需要
+添加spring的jar包：
+
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context</artifactId>
+    </dependency>
+
+然后编写applicationContext-activemq.xml文件，
+代码如下：
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+    http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.2.xsd">
+
+    <!-- 配置能够产生connection的connectionfactory，由JMS对应的服务厂商提供 -->
+    <bean id="tagertConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <constructor-arg name="brokerURL" value="tcp://192.168.156.44:61616"/>
+    </bean>
+    <!-- 配置spring管理真正connectionfactory的connectionfactory，相当于spring对connectionfactory的一层封装 -->
+    <bean id="connectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">
+        <property name="targetConnectionFactory" ref="tagertConnectionFactory"/>
+    </bean>
+    <!-- 配置生产者 -->
+    <!-- Spring使用JMS工具类，可以用来发送和接收消息 -->
+    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <!-- 这里是配置的spring用来管理connectionfactory的connectionfactory -->
+        <property name="connectionFactory" ref="connectionFactory"/>
+    </bean>
+    <!-- 配置destination -->
+    <!-- 队列目的地 -->
+    <bean id="queueDestination" class="org.apache.activemq.command.ActiveMQQueue">
+        <constructor-arg value="spring-queue"/>
+    </bean>
+    <!-- 话题目的地 -->
+    <bean id="itemAddTopic" class="org.apache.activemq.command.ActiveMQTopic">
+        <constructor-arg value="item-add-topic"/>
+    </bean>
+</beans>
+
+然后在我们淘淘商城中，商品添加到数据库的时候，对应也要添加数据到我们的solr索引
+中，所以生产者应该在插入数据后创建：
+这里写图片描述
+当然，在xml文件中配置好的jmstemplate和destination也要注入进来：
+
+    @Autowired
+    private JmsTemplate jmsTemplate;
+    @Resource(name="itemAddTopic")
+    private Destination destination;
+
+然后消费者应该写在我们的搜索工程中，首先添加spring和activeMQ的jar包，然后配置
+xml文件，再编写一个监听器，当接收到消息时，就讲数据存入索引库，xml文件代码如下
+：
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+    http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.2.xsd">
+
+    <!-- 配置能够产生connection的connectionfactory，由JMS对应的服务厂商提供 -->
+    <bean id="tagertConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <constructor-arg name="brokerURL" value="tcp://192.168.156.44:61616"/>
+    </bean>
+    <!-- 配置spring管理真正connectionfactory的connectionfactory，相当于spring对connectionfactory的一层封装 -->
+    <bean id="connectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">
+        <property name="targetConnectionFactory" ref="tagertConnectionFactory"/>
+    </bean>
+    <!-- 配置destination -->
+    <!-- 队列目的地 -->
+    <bean id="queueDestination" class="org.apache.activemq.command.ActiveMQQueue">
+        <constructor-arg value="spring-queue"/>
+    </bean>
+    <!-- 话题目的地 -->
+    <bean id="itemAddTopic" class="org.apache.activemq.command.ActiveMQTopic">
+        <constructor-arg value="item-add-topic"/>
+    </bean>
+    <!-- 配置监听器 -->
+    <bean id="myListener" class="com.taotao.search.listener.MyListener"/>
+    <bean id="itemAddListener" class="com.taotao.search.listener.ItemAddListener"/>
+    <!-- 系统监听器 -->
+<!--    <bean class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="destination" ref="queueDestination"/>
+        <property name="messageListener" ref="myListener"/>
+    </bean> -->
+    <bean class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="destination" ref="itemAddTopic"/>
+        <property name="messageListener" ref="itemAddListener"/>
+    </bean>
+</beans>
+
+接收消息代码：
+这里写图片描述
+最后同时打开测试即可。
+
+阅读更多
+想对作者说点什么？我来说一句
+ 
+
+activeMQ的原理及使用
+
+qq_22251517 qq_22251517
+
+09-19 4687
+
+activeMQ底层实现原理：在讨论具体方式的时候，我们先看看使用activemq需要启动服务
+的主要过程。按照JMS的规范，我们首先需要获得一个JMS connecti...
+
+ 
+
+ActiveMQ从入门到精通（三）
+
+jek123456 jek123456
+
+05-19 1348
+
+这是ActiveMQ系列的最后一篇文章，主要是关于ActiveMQ集群，这里采用的方式是：
+Zookeeper+LevelDB+ActiveMQ。前面2篇博客地址如下：《ActiveMQ从入门到精通（一...
+
+ 
+
+ActiveMQ消息中间件学习（一）
+
+chenbinqq chenbinqq
+
+12-20 290
+
+RMI:远程方法调用(Remote Method Invocation)。能够让在某个java虚拟机上的对象像调
+用本地对象一样调用另一个java 虚拟机中的对象上的方法。 RMI远程调用步骤： ...
+
+ 
+
+ActiveMQ实战（一）-入门篇
+
+FX_SKY FX_SKY
+
+05-01 2128
+
+概述Apache ActiveMQ是一个非常流行的，能力强劲的开源消息总线服，ActiveMQ 完全支
+持JMS1.1和J2EE 1.4规范。官方介绍如下 Apache ActiveMQ ™ is...
+
+ 
+
+MQ入门总结（三）ActiveMQ的用法和实现
+
+echojson echojson
+
+03-26 992
+
+转载：架构设计：系统间通信（21）——ActiveMQ的安装与使用转载：成小胖学习ActiveMQ·
+基础篇转载：ActiveMQ学习心得之ActiveMQ四种存储器分析转载：ActiveMQ（一）简介...
+
+ 
+
+activeMQ吐血总结
+
+joy1211 joy1211
+
+04-01 1616
+
+1. 消息队列概述消息队列中间件是分布式系统中重要的组件，主要解决应用耦合，异步消
+息，流量削锋等问题。实现高性能，高可用，可伸缩和最终一致性架构。是大型分布式系
+统不可缺少的中间件。目前在生产环境，使用...
+
+ 
+下载
+
+ActiveMQ使用手册（中文版）
+
+06-28
+一份详细ActiveMQ的使用教程
+ 
+
+ActiveMQ学习（四）企业级应用配置详解
+
+u013185616 u013185616
+
+08-01 3760
+
+上一篇关于ActiveMQ的博客仅仅是一个简单的小案例，真正的企业中业务更复杂，情况更
+多变，所以用到的配置和内容也略显复杂。今天就来简单看下一般企业项目中的一些常用
+配置。...
+
+ 
+
+消息队列ActiveMQ的使用
+
+sunguodong_ sunguodong_
+
+01-17 1.3万
+
+-----------------ActiveMQ----------------- 一、ActiveMQ核心概念 1、ActiveMQ是消
+息队列技术，为解决高并发问题而生！ 2、ActiveM...
+
+ 
+
+ActiveMQ学习总结——（三）Topic主题模式示例
+
+j253507692 j253507692
+
+12-21 2275
+
+和队列模式相似，分别编写生产者和订阅者。生产者：package com.jms.topic;import
+javax.jms.Connection; import javax.jms.Connec...
+
+博主推荐
+
+换一批
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+[3_liuyuanq]
+
+JHON_YUAN
+
+关注
+
+原创
+    30
+
+粉丝
+    18
+
+喜欢
+    18
+
+评论
+    13
+
+等级：
+     
+
+访问：
+    3万+
+
+积分：
+    540
+
+排名：
+    10万+
+
+勋章：
+
+持之以恒
+
+授予每个自然月内发布4篇或4篇以上原创或翻译IT博文的用户。不积跬步无以至千里，不
+积小流无以成江海，程序人生的精彩需要坚持不懈地积累！
+
+最新文章
+
+  • springmvc学习
+  • mybatis学习
+  • Spring学习之AOP
+  • spring学习之环境搭建
+  • HashMap的死循环解析
+
+个人分类
+
+  • C语言 1篇
+  • 芯片驱动 1篇
+  • 淘淘商城学习 5篇
+  • spring 1篇
+  • springmvc 4篇
+  • redis 1篇
+  • solr 2篇
+  • ActiveMQ 1篇
+  • dubbo 1篇
+  • java基础 3篇
+  • 集合 4篇
+  • 数据结构与算法 3篇
+  • 设计模式 2篇
+  • spring学习 2篇
+  • mybatis 1篇
+
+展开
+
+归档
+
+  • 2018年7月 4篇
+  • 2018年5月 3篇
+  • 2018年4月 4篇
+  • 2018年3月 6篇
+  • 2018年1月 3篇
+  • 2017年12月 6篇
+  • 2017年11月 2篇
+  • 2016年8月 2篇
+
+展开
+
+热门文章
+
+  • ActiveMQ详细入门使用教程
+
+    阅读量：28128
+
+  • BMX055驱动日记
+
+    阅读量：2289
+
+  • 分页插件pagehelper的使用
+
+    阅读量：1149
+
+  • C语言位域的使用方法
+
+    阅读量：681
+
+  • redis入门使用教程
+
+    阅读量：668
+
+最新评论
+
+  • java基础学习之语言基础一
+
+    qq_43301079：新人路过,感谢博主分享,然后另外说点自己学到的一些看法,如byte和
+    short这些并不是不能自动转...
+
+  • ActiveMQ详细入门使用教程
+
+    maguoliang110：[reply]qq_32092723[/reply] 感激，学习学习
+
+  • ActiveMQ详细入门使用教程
+
+    qq_32092723：[reply]maguoliang110[/reply] 淘淘商城我做完了，源码要的话拿去
+    htt...
+
+  • ActiveMQ详细入门使用教程
+
+    maguoliang110：写的很好，淘淘商城源码有没有，分享一下啊哈哈
+
+  • ActiveMQ详细入门使用教程
+
+    tian_sweety：谢谢作者如此详细周密的写此文章！受益匪浅
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    11
+   
+  • 评论
+
+    8
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

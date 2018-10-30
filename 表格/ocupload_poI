@@ -1,0 +1,316 @@
+返回主页
+
+柠檬旋风腿
+
+  • 博客园
+  • 首页
+  • 新随笔
+  • 联系
+  • 管理
+  • 订阅订阅
+
+随笔- 44  文章- 0  评论- 12 
+
+使用ocupload和POI一键上传Excel并解析导入数据库
+
+使用的工具如下：
+
+　　　　 JQuery ocupload　　　　jquery.ocupload-1.1.2.js
+
+　　　　 Apache POI　　　　　　 poi-3.9.jar           
+
+　　　　如果是Maven项目添加依赖如下：
+
+ <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>3.9</version>   
+ </dependency>
+
+
+JQuery ocupload:
+
+首先要使用一键上传要在从项目中引用js（地址在上面）
+
+官方的上传例子：
+
+$(element).upload({
+                name: 'file',//上传组件的name属性，即<input type='file' name='file'/>
+                action: '',//向服务器请求的路径
+                enctype: 'multipart/form-data',//mime类型，默认即可
+                params: {},//请求时额外传递的参数，默认为空
+                autoSubmit: true,//是否自动提交，即当选择了文件，自动关闭了选择窗口后，是否自动提交请求。
+                onSubmit: function() {},//提交表单之前触发事件
+                onComplete: function() {},//提交表单完成后触发的事件
+                onSelect: function() {}//当用户选择了一个文件后触发事件
+        });
+
+
+开发代码：
+
+1.自定义一个按钮
+
+<button type="button" id="uploadExcel"><i>&nbsp;上传Excel</i></button>
+
+ 
+
+我的项目使用的bootstrap有需要的可以参考下其中的样式，用其他UI的可以忽略
+[979024-201]
+
+<button type="button" id="uploadExcel" class="btn btn-primary disabled" data-btn-type="selectIcon">
+         <i class="fa fa-mail-forward">&nbsp;上传Excel-（西药）</i>
+</button>
+
+2.上传文件的js代码
+
+//调用OCUpload插件的方法
+    $("#uploadExcel").upload({
+        action:basePath+"/excel/upload/WesternMedicine", //表单提交的地址
+        name:"myFile",
+        onComplete:function (data) { //提交表单之后
+           if(data == "0"){
+                $("#myModal").modal(); //提示框，Excel导入成功
+            }else{
+                $("#myModal2").modal(); //提示框，Excel导入成失败
+            }
+        },
+        onSelect: function() {//当用户选择了一个文件后触发事件
+            //当选择了文件后，关闭自动提交
+            this.autoSubmit=false;
+            //校验上传的文件名是否满足后缀为.xls或.xlsx
+            var regex =/^.*\.(?:xls|xlsx)$/i;
+            //this.filename()返回当前选择的文件名称 (ps：我使用这个方法没好使，自己写了一个获取文件的名的方法) $("[name = '"+this.name()+"']").val())
+            //alert(this.filename());
+            if(regex.test($("[name = '"+this.name()+"']").val())){
+                //通过校验
+                this.submit();
+            }else{
+                //未通过
+                $("#myModal3").modal(); //错误提示框，文件格式不正确，必须以.xls或.xlsx结尾
+            }
+        }
+    });
+
+3.使用POI上传的后台代码：
+ 先建立一个class POIUtil 放便使用：本人写了一个，但是在查询资料时候，发现一个更
+全面的POIUtil便copy下来如下：
+
+ 出处：java使用POI实现excel文件的读取，兼容后缀名xls和xlsx
+
+ Class POIUtil ：
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.web.multipart.MultipartFile;
+/**
+ * excel读写工具类
+ * Excel 导入到mysql
+ * Created by CR7 on 2017-3-8
+ */
+public class POIUtil {
+
+        private static Logger logger  = Logger.getLogger(POIUtil.class);
+        private final static String xls = "xls";
+        private final static String xlsx = "xlsx";
+
+        /**
+         * 读入excel文件，解析后返回
+         * @param file
+         * @throws IOException
+         */
+        public static List<String[]> readExcel(MultipartFile file) throws IOException{
+            //检查文件
+            checkFile(file);
+            //获得Workbook工作薄对象
+            Workbook workbook = getWorkBook(file);
+            //创建返回对象，把每行中的值作为一个数组，所有行作为一个集合返回
+            List<String[]> list = new ArrayList<String[]>();
+            if(workbook != null){
+                for(int sheetNum = 0;sheetNum < workbook.getNumberOfSheets();sheetNum++){
+                    //获得当前sheet工作表
+                    Sheet sheet = workbook.getSheetAt(sheetNum);
+                    if(sheet == null){
+                        continue;
+                    }
+                    //获得当前sheet的开始行
+                    int firstRowNum  = sheet.getFirstRowNum();
+                    //获得当前sheet的结束行
+                    int lastRowNum = sheet.getLastRowNum();
+                    //循环除了第一行的所有行
+                    for(int rowNum = firstRowNum+1;rowNum <= lastRowNum;rowNum++){
+                        //获得当前行
+                        Row row = sheet.getRow(rowNum);
+                        if(row == null){
+                            continue;
+                        }
+                        //获得当前行的开始列
+                        int firstCellNum = row.getFirstCellNum();
+                        //获得当前行的列数
+                        int lastCellNum = row.getPhysicalNumberOfCells();
+                        String[] cells = new String[row.getPhysicalNumberOfCells()];
+                        //循环当前行
+                        for(int cellNum = firstCellNum; cellNum < lastCellNum;cellNum++){
+                            Cell cell = row.getCell(cellNum);
+                            cells[cellNum] = getCellValue(cell);
+                        }
+                        list.add(cells);
+                    }
+                }
+               // workbook.close();
+            }
+            return list;
+        }
+        public static void checkFile(MultipartFile file) throws IOException{
+            //判断文件是否存在
+            if(null == file){
+                logger.error("文件不存在！");
+                throw new FileNotFoundException("文件不存在！");
+            }
+            //获得文件名
+            String fileName = file.getOriginalFilename();
+            //判断文件是否是excel文件
+            if(!fileName.endsWith(xls) && !fileName.endsWith(xlsx)){
+                logger.error(fileName + "不是excel文件");
+                throw new IOException(fileName + "不是excel文件");
+            }
+        }
+        public static Workbook getWorkBook(MultipartFile file) {
+            //获得文件名
+            String fileName = file.getOriginalFilename();
+            //创建Workbook工作薄对象，表示整个excel
+            Workbook workbook = null;
+            try {
+                //获取excel文件的io流
+                InputStream is = file.getInputStream();
+                //根据文件后缀名不同(xls和xlsx)获得不同的Workbook实现类对象
+                if(fileName.endsWith(xls)){
+                    //2003
+                    workbook = new HSSFWorkbook(is);
+                }else if(fileName.endsWith(xlsx)){
+                    //2007 及2007以上
+                    workbook = new XSSFWorkbook(is);
+                }
+            } catch (IOException e) {
+                logger.info(e.getMessage());
+            }
+            return workbook;
+        }
+        public static String getCellValue(Cell cell){
+            String cellValue = "";
+            if(cell == null){
+                return cellValue;
+            }
+            //把数字当成String来读，避免出现1读成1.0的情况
+            if(cell.getCellType() == Cell.CELL_TYPE_NUMERIC){
+                cell.setCellType(Cell.CELL_TYPE_STRING);
+            }
+            //判断数据的类型
+            switch (cell.getCellType()){
+                case Cell.CELL_TYPE_NUMERIC: //数字
+                    cellValue = String.valueOf(cell.getNumericCellValue());
+                    break;
+                case Cell.CELL_TYPE_STRING: //字符串
+                    cellValue = String.valueOf(cell.getStringCellValue());
+                    break;
+                case Cell.CELL_TYPE_BOOLEAN: //Boolean
+                    cellValue = String.valueOf(cell.getBooleanCellValue());
+                    break;
+                case Cell.CELL_TYPE_FORMULA: //公式
+                    cellValue = String.valueOf(cell.getCellFormula());
+                    break;
+                case Cell.CELL_TYPE_BLANK: //空值
+                    cellValue = "";
+                    break;
+                case Cell.CELL_TYPE_ERROR: //故障
+                    cellValue = "非法字符";
+                    break;
+                default:
+                    cellValue = "未知类型";
+                    break;
+            }
+            return cellValue;
+        }
+    }
+
+
+后台代码：使用的是SpringMVC 和Spring 和Hibernate
+
+controller：
+
+ // 上传西药
+    @RequestMapping(method = RequestMethod.POST ,value="/upload/WesternMedicine")
+    @ResponseBody
+    private String uploadWesternMedicine(MultipartFile myFile) throws IOException {
+        String flag ="0";
+        try{
+            List<String[]> list = POIUtil.readExcel(myFile); //这里得到的是一个集合，里面的每一个元素是String[]数组
+            excelService.saveBath(list); //service实现方法 
+            } catch(Exception e){
+           flag = "1";
+        }
+        return flag;
+    }
+
+serviceImpl:思路就是遍历数据得到每一个String[],也就是类，然后保存（其中数字转换
+时候可能有一些问题，下面有解决方法）
+
+ @Override
+    public void saveBath(List<String[]> list) {
+        for (String[] strings : list) {
+            Drug drug = new Drug();
+            drug.setName(strings[0]);
+            drug.setSpecification(strings[1]);
+            drug.setUnit(strings[2]);
+            //drug.setPrice(strings[3]);  //这种方法会导致价格出现如下数字：16.399999999999999  77.900000000000006
+            BigDecimal bd = new BigDecimal(strings[3]);
+            bd = bd.setScale(1,BigDecimal.ROUND_HALF_UP);
+            String price = bd.toString();
+            if("0".equals(price.substring(price.length()-1))){ //如果最后一位是0  如 26.0元  33.0元 就把 .0 删除
+                String newPrice = price.substring(0, price.length()-2);
+                drug.setPrice(newPrice);
+            }else{
+                drug.setPrice(price);
+            }
+            drug.setStatus("0");
+            drug.setDrug_classify("8afa9409591f762b01591ffa62ff0006");
+            this.save(drug);
+        }
+    }
+
+
+上传成功：
+
+截图如下：
+
+[979024-20170309165143875-995414407]
+
+ 
+
+ [979024-20170309165300234-23824377]
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+　　　　
+
+posted @ 2017-03-09 16:54 张昊亮阅读(...) 评论(...) 编辑收藏
+刷新评论刷新页面返回顶部
+Copyright ©2018 张昊亮

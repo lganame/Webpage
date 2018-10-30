@@ -1,0 +1,172 @@
+EasyUI
+
+  • jQuery EasyUI
+
+  • Home
+  • Demo
+  • Tutorial
+  • Documentation
+  • Download
+  • Extension
+  • Contact
+  • Forum
+
+Welcome to EasyUI
+
+EasyUI framework helps you build your web pages easily.
+
+GET STARTED
+
+What is EasyUI?
+
+  • easyui is a collection of user-interface components based on jQuery,
+    Angular and Vue.
+  • easyui provides essential functionality for building modern, interactive,
+    javascript applications.
+  • using easyui you don't need to write many javascript code, you usually
+    define user-interface by writing some HTML markups.
+  • complete framework for HTML5 web page.
+  • easyui saves your time and scales while developing your products.
+  • easyui is very easy but powerful.
+
+[easyui]
+
+Easy to use on jQuery and HTML5
+
+EasyUI for jQuery provides easy to use components for web developers, which is
+built on the popular jQuery core and HTML5. These make your applications
+suitable for today's web. There are two ways to declare ui components:
+
+Declare components directly within HTML
+
+<div class="easyui-dialog" style="width:400px;height:200px"
+    data-options="
+        title:'My Dialog',
+        iconCls:'icon-ok',
+        onOpen:function(){}">
+    dialog content.
+</div>
+
+Write JavaScript code to create components
+
+<input id="cc" style="width:200px" />
+
+$('#cc').combobox({
+        url: ...,
+        required: true,
+        valueField: 'id',
+        textField: 'text'
+});
+
+Native angular components
+
+EasyUI for Angular is built based on native angular 5 and higher. No other
+external javascript libraries are needed.
+
+<eui-datagrid [data]="data" [clickToEdit]="true" editMode="row" style="height:250px">
+        <eui-grid-column field="itemid" title="Item ID" [editable]="true"></eui-grid-column>
+        <eui-grid-column field="name" title="Name" [editable]="true"></eui-grid-column>
+        <eui-grid-column field="listprice" title="List Price" align="right" [editable]="true">
+                <ng-template euiEditTemplate let-row="row">
+                        <eui-numberbox [(ngModel)]="row.listprice" precision="1"></eui-numberbox>
+                </ng-template>
+        </eui-grid-column>
+        <eui-grid-column field="unitcost" title="Unit Cost" align="right" [editable]="true">
+                <ng-template euiEditTemplate let-row="row">
+                        <eui-numberbox [(ngModel)]="row.unitcost"></eui-numberbox>
+                </ng-template>
+        </eui-grid-column>
+        <eui-grid-column field="attr" title="Attribute" width="30%" [editable]="true"></eui-grid-column>
+        <eui-grid-column field="status" title="Status" align="center" [editable]="true">
+                <ng-template euiEditTemplate let-row="row">
+                        <eui-switchbutton [(ngModel)]="row.status" style="max-width:80px" onText="true" offText="false"></eui-switchbutton>
+                </ng-template>
+        </eui-grid-column>
+</eui-datagrid>
+
+See Demos
+
+Native Vue components
+
+<DataGrid :data="data" style="height:250px">
+        <GridColumn field="itemid" title="Item ID"></GridColumn>
+        <GridColumn field="name" title="Name"></GridColumn>
+        <GridColumn field="listprice" title="List Price" align="right"></GridColumn>
+        <GridColumn field="unitcost" title="Unit Cost" align="right"></GridColumn>
+        <GridColumn field="attr" title="Attribute" width="30%"></GridColumn>
+        <GridColumn field="status" title="Status" align="center"></GridColumn>
+</DataGrid>
+
+See Demos
+[demos]
+
+Tutorials and Demos are Ready
+
+Lots of tutorials and demos applications help you learn more about this
+framework.
+
+EasyUI provides everything you need for building your web page. These tutorials
+will show you step-by-step how to create your application. Enjoy and hopefully
+you can learn from them.
+
+See Demos
+
+All Plugins
+
+jQuery EasyUI offers a full collection of components including powerful
+datagrid, treegrid, panel, combo and more for building cross-browser web page.
+Users can use them all together, or just use some components they want.
+
+  • parser
+  • easyloader
+  • draggable
+  • droppable
+  • resizable
+  • pagination
+  • searchbox
+  • progressbar
+  • tooltip
+  • mobile
+  • panel
+  • tabs
+  • accordion
+  • layout
+  • menu
+  • sidemenu
+  • linkbutton
+  • menubutton
+  • splitbutton
+  • switchbutton
+  • form
+  • validatebox
+  • textbox
+  • passwordbox
+  • maskedbox
+  • combo
+  • combobox
+  • combotree
+  • combogrid
+  • combotreegrid
+  • tagbox
+  • numberbox
+  • datebox
+  • datetimebox
+  • datetimespinner
+  • calendar
+  • spinner
+  • numberspinner
+  • timespinner
+  • slider
+  • filebox
+  • checkbox
+  • radiobutton
+  • window
+  • dialog
+  • messager
+  • datagrid
+  • datalist
+  • propertygrid
+  • tree
+  • treegrid
+
+Copyright © 2010-2018 www.jeasyui.com

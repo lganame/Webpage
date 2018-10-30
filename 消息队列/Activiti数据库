@@ -1,0 +1,1454 @@
+[]
+
+原
+
+Activiti工作流框架学习笔记(一)
+
+2017年05月07日 00:52:58 李阿昀阅读数：32714 标签： activiti
+个人分类： Activiti工作流框架的点滴
+所属专栏： SSH项目实战
+版权声明：本文为博主原创文章，未经博主允许不得转载。 https://blog.csdn.net/
+yerenyuan_pku/article/details/71307305
+
+工作流的概念
+
+先看下面两张图：
+这里写图片描述
+
+这里写图片描述
+对以上两张图进行说明：
+
+ 1. 假设这两张图就是华谊兄弟的请假流程图
+ 2. 图的组成部分：
+      □ 人物：范冰冰、冯小刚、王中军
+      □ 事件（动作）：请假、批准、不批准
+
+通过以上分析我们就可以抽象成：
+这里写图片描述
+接下来给出工作流的书面化概念：
+
+    工作流(Workflow)，就是“业务过程的部分或整体在计算机应用环境下的自动化”，它
+    主要解决的是“使在多个参与者之间按照某种预定义的规则传递文档、信息或任务的过
+    程自动进行，从而实现某个预期的业务目标，或者促使此目标的实现”。
+
+对于第一次接触工作流的小伙伴来说，觉得难以理解，也无可厚非，说得好像我自己就能
+深刻理解一样，我也只是将学习Activiti工作流框架中的一些知识点记录下来而已，也希
+望能和大家讨论。
+
+不管了，下面也给出工作流管理系统的概念：
+
+    工作流管理系统(Workflow Management System, WfMS)是一个软件系统，它完成工作
+    量的定义和管理，并按照在系统中预先定义好的工作流逻辑进行工作流实例的执行。
+    工作流管理系统不是企业的业务系统，而是为企业的业务系统的运行提供了一个软件
+    的支撑环境。
+
+除此之外，工作流管理联盟(WfMC，Workflow Management Coalition)也给出了关于工作流
+管理系统的定义：
+
+    工作流管理系统是一个软件系统，它通过执行经过计算的流程定义去支持一批专门设
+    定的业务流程。工作流管理系统被用来定义、管理和执行工作流程。
+
+而工作流管理系统的目标为：
+
+    管理工作的流程以确保工作在正确的时间被期望的人员所执行——在自动化进行的业务
+    过程中插入人工的执行和干预。
+
+说完工作流，不可避免就要阐述一下工作流框架的概念，工作流框架即用于处理工作流相
+关问题的框架。常见的工作流框架有：
+
+ 1. activiti5.13
+ 2. JBPM4.4
+ 3. OSWorkflow
+
+我本人使用的是activiti5.13这个工作流框架。
+
+Activiti介绍
+
+Activiti5是由Alfresco软件在2010年5月17日发布的业务流程管理（BPM）框架，它是覆盖
+了业务流程管理、工作流、服务协作等领域的一个开源的、灵活的、易扩展的可执行流程
+语言框架。Activiti基于Apache许可的开源BPM平台，创始人Tom Baeyens是JBoss JBPM的
+项目架构师，它的特色是提供了eclipse插件，开发人员可以通过插件直接绘画出业务流程
+图。
+大家可能听说过业务流程图一嘴，这里给出两个业务流程图：
+
+  • 请假流程图
+    这里写图片描述
+  • 不知道什么情况的业务流程图
+    这里写图片描述
+
+Activiti框架的目录结构
+
+Activiti框架的目录结构如下图所示：
+这里写图片描述
+你会发现bin目录是空的。database目录下有3个目录，一个目录是create，里面存放的是
+建表语句，一个目录是drop，里面存放的是删除表的语句，最后一个目录是upgrade，里面
+存放的是升级Activiti的语句。libs目录下是一些jar包，最核心的jar包是
+activiti-engine-5.13.jar。wars目录下存放的是Activiti框架官方的学习demo，我们初
+次学习Activiti框架必然要借鉴其中的案例。
+我想大家可能会好奇Activiti框架里面为何会有一些建表语句。因为工作流框架底层是有
+一套数据库提供支持的，针对不同的数据库提供不同的sql建表语句。Activiti5.13框架对
+应23张表，JBPM4.4框架对应18张表，开发人员不需要自己编写sql语句操作这些表，框架
+底层会生成sql语句操作。Activiti5.13框架底层使用mybatis框架操作数据库，JBPM框架
+底层使用hibernate框架操作数据库。
+
+安装activiti插件——流程设计器插件
+
+要在eclipse上安装activiti插件，可参考我的文章4.5版本eclipse安装activiti插件！
+下面我就来用这个插件设计一个请假流程图：
+【第一步】，建一个普通的java项目，例如activiti_02，在src目录下右键→New→Other...
+这里写图片描述
+【第二步】，在弹出的对话框中，在输入项中输入activiti，快速找到Activiti Diagram
+，选中它，点击Next
+这里写图片描述
+【第三步】，在弹出的对话框中，写入流程图的名称，当然了亦可使用默认名称
+——MyProcess，然后点击Next
+这里写图片描述
+【第四步】，在最后弹出的对话框中直接点击Finish
+这里写图片描述
+【第五步】，观看以下gif动图，读者即可创建一个请假流程图
+这里写图片描述
+
+创建Activiti框架提供的数据库表
+
+使用Activiti框架提供的sql脚本建表
+
+Activiti框架提供了sql脚本文件用于建表，这些sql脚本文件就位于Activiti框架
+database目录下的create目录中，如下：
+这里写图片描述
+下面我就来使用Activiti框架提供的sql脚本建表，步骤如下：
+【第一步】，手动创建一个数据库
+这里写图片描述
+【第二步】，进入数据库，执行框架提供的sql脚本文件
+这里写图片描述
+
+这里写图片描述
+照理来说我们可以使用source命令来执行这些sql脚本文件的，但不知为何，我就是不行。
+我就没纠结这个问题了，直接将以下三个sql脚本文件拖入Navicat for MySQL图形化工具
+中。
+
+ 1. activiti.mysql.create.engine.sql
+ 2. activiti.mysql.create.history.sql
+ 3. activiti.mysql.create.identity.sql
+
+使用Activiti框架自动建表
+
+在上面创建好了一个普通的java项目——activiti_02之后，要使用Activiti框架自动建表，
+还必须导入Activiti框架所需的jar包，那这些jar包到哪儿去找呢？还记得之前我讲过
+Activiti框架下的wars目录中存放的是Activiti框架官方的学习demo吗？所以读者可将
+wars目录中的activiti-rest.war文件解压缩，在activiti-5.13\wars\activiti-rest\
+WEB-INF\lib目录下可找到Activiti框架所需的所有jar包，如下：
+这里写图片描述
+接着在activiti_02项目下新建一个lib目录，将以上Activiti框架所需的所有jar包导入到
+lib目录中，除此之外，还要导入MySQL数据库驱动的jar包：
+这里写图片描述
+读者可千万别忘了这个jar包哟！！！
+
+在没有提供xml配置文件的情况下使用Activiti框架自动建表
+
+在src目录下创建一个cn.itcast.activiti包，并在该包下编写一个HelloWorld单元测试类
+，并在该类中编写如下单元测试方法：
+
+public class HelloWorld {
+    /**
+     * 使用activiti框架提供的自动建表方式创建23张表-----没有提供配置文件
+     */
+    @Test
+    public void test1() {
+        // 创建一个流程引擎配置对象
+        ProcessEngineConfiguration conf =
+                ProcessEngineConfiguration.createStandaloneProcessEngineConfiguration();
+        // 设置jdbc连接参数
+        conf.setJdbcDriver("com.mysql.jdbc.Driver"); conf.setJdbcUrl("jdbc:mysql://localhost:3306/activiti_01");
+        conf.setJdbcUsername("root");
+        conf.setJdbcPassword("yezi");
+        // 设置自动建表
+        conf.setDatabaseSchemaUpdate("true");
+        // 使用配置对象创建一个流程引擎对象，并且在创建过程中可以自动建表
+        ProcessEngine processEngine = conf.buildProcessEngine();
+    }
+
+}
+
+执行以上test1方法，即可在activiti_01数据库中创建好23张表。
+
+在提供xml配置文件的情况下使用Activiti框架自动建表
+
+在没有提供xml配置文件的情况时使用Activiti框架自动建表，我是把jdbc连接参数写死在
+程序中的，想都不要想，这种方式是愚蠢的。更合理的做法是把这些jdbc连接参数配置到
+一个配置文件中，而不是在java代码中写死。
+在activiti_02项目下新建一个config源码目录，并在该目录下创建一个
+activiti-context.xml配置文件，内容如下：
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/context
+                        http://www.springframework.org/schema/context/spring-context-2.5.xsd
+                        http://www.springframework.org/schema/tx
+                        http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+    <!-- 配置一个流程引擎配置对象 -->
+    <bean id="processEngineConfiguration" class="org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration">
+        <property name="jdbcDriver" value="com.mysql.jdbc.Driver"></property>
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/activiti_01"></property>
+        <property name="jdbcUsername" value="root"></property>
+        <property name="jdbcPassword" value="yezi"></property>
+        <property name="databaseSchemaUpdate" value="true"></property>
+    </bean>
+
+    <!-- 配置一个流程引擎工厂bean，用于创建流程引擎对象 -->
+    <bean id="processEngine" class="org.activiti.spring.ProcessEngineFactoryBean">
+        <property name="processEngineConfiguration" ref="processEngineConfiguration"></property>
+    </bean>
+</beans>
+
+其实，以上id为processEngine的bean可不用配置，当然了配了也没关系，只不过是为后面
+的学习做铺垫而已，这里无伤大雅啊！
+接着在HelloWorld单元测试类中编写如下单元测试方法：
+
+public class HelloWorld {
+
+    /**
+     * 使用activiti框架提供的自动建表方式创建23张表-----提供配置文件
+     */
+    @Test
+    public void test2() {
+        // 获得一个流程引擎配置对象
+        ProcessEngineConfiguration conf = ProcessEngineConfiguration
+                .createProcessEngineConfigurationFromResource(
+                        "activiti-context.xml", "processEngineConfiguration");
+        // 使用配置对象创建一个流程引擎对象，并且在创建过程中可以自动建表
+        ProcessEngine processEngine = conf.buildProcessEngine();
+    }
+
+}
+
+执行以上test2方法，也可在activiti_01数据库中创建好23张表。
+
+在提供默认配置文件的情况下使用Activiti框架自动建表
+
+在实际开发中，建议在提供默认配置文件的情况下使用Activiti框架自动建表。但须注意
+：配置文件必须在类路径的根路径下，配置文件的名称必须为activiti-context.xml或者
+为activiti.cfg.xml，xml配置文件中必须配置流程引擎配置对象，id必须为
+processEngineConfiguration，且必须配置流程引擎工厂bean，id必须为processEngine。
+由此可知，我在config源码目录下编写的activiti-context.xml配置文件完全符合以上要
+求，activiti-context.xml配置文件的内容为：
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/context
+                        http://www.springframework.org/schema/context/spring-context-2.5.xsd
+                        http://www.springframework.org/schema/tx
+                        http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+    <!-- 配置一个流程引擎配置对象 -->
+    <bean id="processEngineConfiguration" class="org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration">
+        <property name="jdbcDriver" value="com.mysql.jdbc.Driver"></property>
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/activiti_01"></property>
+        <property name="jdbcUsername" value="root"></property>
+        <property name="jdbcPassword" value="yezi"></property>
+        <property name="databaseSchemaUpdate" value="true"></property>
+    </bean>
+
+    <!-- 配置一个流程引擎工厂bean，用于创建流程引擎对象 -->
+    <bean id="processEngine" class="org.activiti.spring.ProcessEngineFactoryBean">
+        <property name="processEngineConfiguration" ref="processEngineConfiguration"></property>
+    </bean>
+</beans>
+
+这个activiti-context.xml配置文件就是Activiti核心配置文件，主要配置流程引擎创建
+工具的基本参数和数据库连接池参数。
+定义数据库配置参数：
+
+  • jdbcUrl：数据库的JDBC URL
+  • jdbcDriver：对应不同数据库类型的驱动
+  • jdbcUsername：连接数据库的用户名
+  • jdbcPassword：连接数据库的密码
+
+基于JDBC参数配置的数据库连接会使用默认的MyBatis连接池。下面的参数可以用来配置连
+接池（来自MyBatis参数）：
+
+  • jdbcMaxActiveConnections：连接池中处于被使用状态的连接的最大值。默认为10
+  • jdbcMaxIdleConnections：连接池中处于空闲状态的连接的最大值
+  • jdbcMaxCheckoutTime：连接被取出使用的最长时间，超过时间会被强制回收。默认为
+    20000（20秒）
+  • jdbcMaxWaitTime：这是一个底层配置，让连接池可以在长时间无法获得连接时，打印
+    一条日志，并重新尝试获取一个连接。（避免因为错误配置导致沉默的操作失败）。
+    默认为20000（20秒）
+
+在这里我给出一个示例数据库配置：
+这里写图片描述
+当然了也可以使用javax.sql.DataSource。（比如，Apache Commons的DBCP）：
+这里写图片描述
+以上就当作了解，哈哈，我也没这样写过！初次学习Activiti工作流框架的小白也不需要
+接触到这些配置，真到要用的时候，再回来看呗！
+不说远了，接着再在HelloWorld单元测试类中编写如下单元测试方法：
+
+public class HelloWorld {
+
+    /**
+     * 使用activiti框架提供的自动建表方式创建23张表-----使用默认配置文件
+     */
+    @Test
+    public void test3() {
+        ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    }
+
+}
+
+执行以上test3方法，同样也可在activiti_01数据库中创建好23张表。
+
+了解Activiti框架提供的23张表
+
+Activiti的后台是有数据库的支持的，所有的表都以ACT_开头。第二部分是表示用途的两
+个字母标识。用途也和服务的API对应。
+
+ 1. ACT_RE_*：’RE’表示repository。这个前缀的表包含了流程定义和流程静态资源（图
+    片，规则等等）。
+ 2. ACT_RU_*：’RU’表示runtime。这些是运行时的表，包含流程实例，任务，变量，异步
+    任务等运行中的数据。Activiti只在流程实例执行过程中保存这些数据，在流程结束
+    时就会删除这些记录。这样运行时表可以一直很小且速度很快。
+ 3. ACT_ID_*：’ID’表示identity。这些表包含身份信息，比如用户，组等等。
+ 4. ACT_HI_*：’HI’表示history。这些表包含历史数据，比如历史流程实例，变量，任务
+    等等。
+ 5. ACT_GE_*：通用数据，用于不同场景下。
+
+资源库流程规则表
+
+ 1. act_re_deployment：部署信息表
+ 2. act_re_model：流程设计模型部署表
+ 3. act_re_procdef：流程定义数据表
+
+运行时数据库表
+
+ 1. act_ru_execution：运行时流程执行实例表
+ 2. act_ru_identitylink：运行时流程人员表，主要存储任务节点与参与者的相关信息
+ 3. act_ru_task：运行时任务节点表
+ 4. act_ru_variable：运行时流程变量数据表
+
+历史数据库表
+
+ 1. act_hi_actinst：历史节点表
+ 2. act_hi_attachment：历史附件表
+ 3. act_hi_comment：历史意见表
+ 4. act_hi_identitylink：历史流程人员表
+ 5. act_hi_detail ：历史详情表，提供历史变量的查询
+ 6. act_hi_procinst：历史流程实例表
+ 7. act_hi_taskinst：历史任务实例表
+ 8. act_hi_varinst：历史变量表
+
+组织机构表
+
+ 1. act_id_group ：用户组信息表
+ 2. act_id_info：用户扩展信息表
+ 3. act_id_membership：用户与用户组对应信息表
+ 4. act_id_user：用户信息表
+
+这四张表很常见，基本的组织机构管理，关于用户认证方面建议还是自己开发一套，组件
+自带的功能太简单，使用中有很多需求难以满足。
+
+通用数据表
+
+ 1. act_ge_bytearray：二进制数据表
+ 2. act_ge_property：属性数据表存储整个流程引擎级别的数据，初始化表结构时会默认
+    插入三条记录
+
+BPMN
+
+业务流程建模与标注（Business Process Model and Notation，BPMN) ，描述流程的基本
+符号，包括这些图元如何组合成一个业务流程图（Business Process Diagram）。
+
+Activiti框架的API使用
+
+首先使用流程设计器插件设计一个请假流程，读者不妨按照如下gif动图来设计：
+在这儿特此作出申明，由于【使用流程设计器插件设计一个请假流程.gif】大小已超过2M
+的限制，所以未能上传，但读者可点击使用流程设计器插件设计一个请假流程.gif进行下
+载并查看，给大家带来一些阅读上的麻烦，还请谅解！！！
+读者在设计请假流程图时，必然要知道Assignee的意思，它指定任务的办理人。恐怕大家
+可能会有一个疑问：如果像上面那样设计的话，只有张三一个人能提交请假申请，其他人
+是提交不了申请的。我们现在是为了测试的方便，所以就指定死了，后面我们会有办法来
+动态地指定。
+
+部署流程定义
+
+部署流程定义即将请假规则应用到数据库里面去。部署流程定义操作的数据库表有：部署
+表(act_re_deployment)、流程定义表(act_re_procdef)和二进制表(act_ge_bytearray)。
+想必大家肯定想知道部署流程定义怎样用代码来实现，我在HelloWorld单元测试类中编写
+如下单元测试方法：
+
+public class HelloWorld {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+
+    /**
+     * 部署流程定义——即把请假规则应用到数据库里面去
+     */
+    @Test
+    public void test4() {
+
+        // 创建一个部署构建器对象，用于加载流程定义文件(bpmn文件和png文件)
+        DeploymentBuilder deploymentBuilder = processEngine.getRepositoryService().createDeployment();
+        deploymentBuilder.addClasspathResource("qjlc.bpmn");
+        deploymentBuilder.addClasspathResource("qjlc.png");
+        // 部署，并返回一个部署对象(其实Deployment是一个接口)
+        Deployment deployment = deploymentBuilder.deploy();
+        System.out.println(deployment.getId());
+    }
+
+}
+
+整个Activiti框架最核心的组件是ProcessEngine，部署流程定义就需要用到它，只要是跟
+工作流相关的任何操作都要使用到流程引擎对象。为了能让接下来编写的所有单元测试方
+法都能使用到它，故使其成为成员变量。以下这句代码：
+
+Deployment deployment = deploymentBuilder.deploy();
+
+返回的是一个部署对象，注意Deployment是一个接口。其实只要一调用deploy方法，
+Activiti框架就会帮我们发出sql语句，来操作数据库表。一旦我们部署一次，对应地就会
+向部署表(act_re_deployment)里面插入一条数据，如下：
+这里写图片描述
+同时向流程定义表(act_re_procdef)里面插入一条数据，如下：
+这里写图片描述
+流程定义表(act_re_procdef)里面的KEY_字段非常关键，KEY_字段的值是由流程图的id值
+来决定的。注意：KEY_这个字段代表的是流程定义的标识，也即说只要KEY_相同，那么说
+明它们就是同一个流程，但版本号可能不相同。读者不妨再部署两次，你将看到流程定义
+表(act_re_procdef)就是这样的：
+这里写图片描述
+
+查询流程定义
+
+查询流程定义操作的数据表是流程定义表(act_re_procdef)。我在HelloWorld单元测试类
+中编写如下单元测试方法：
+
+public class HelloWorld {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+
+    /**
+     * 查询流程定义
+     */
+    @Test
+    public void test5() {
+        // 流程定义查询对象，用于查询流程定义表（act_re_procdef）
+        ProcessDefinitionQuery query = processEngine.getRepositoryService().createProcessDefinitionQuery();
+        // 以下查询的是所有的流程定义
+        List<ProcessDefinition> list = query.list();
+        for (ProcessDefinition pd : list) {
+            System.out.println(pd.getId() + "    " + pd.getName() + "    " + pd.getVersion());
+        }
+    }
+}
+
+以上查询的是所有的流程定义，我们亦可根据流程定义的key来过滤，如下：
+
+public class HelloWorld {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+
+    /**
+     * 查询流程定义
+     */
+    @Test
+    public void test5() {
+        // 流程定义查询对象，用于查询流程定义表（act_re_procdef）
+        ProcessDefinitionQuery query = processEngine.getRepositoryService().createProcessDefinitionQuery();
+        // 根据流程定义的key来过滤
+        query.processDefinitionKey("qjlc");
+        List<ProcessDefinition> list = query.list();
+        for (ProcessDefinition pd : list) {
+            System.out.println(pd.getId() + "    " + pd.getName() + "    " + pd.getVersion());
+        }
+    }
+}
+
+万一除了要根据流程定义的key来过滤，还要排序，咋办？以码明示：
+
+public class HelloWorld {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+
+    /**
+     * 查询流程定义
+     */
+    @Test
+    public void test5() {
+        // 流程定义查询对象，用于查询流程定义表（act_re_procdef）
+        ProcessDefinitionQuery query = processEngine.getRepositoryService().createProcessDefinitionQuery();
+        // 根据流程定义的key来过滤
+        query.processDefinitionKey("qjlc");
+        // 添加排序条件
+        query.orderByProcessDefinitionVersion().desc();
+        List<ProcessDefinition> list = query.list();
+        for (ProcessDefinition pd : list) {
+            System.out.println(pd.getId() + "    " + pd.getName() + "    " + pd.getVersion());
+        }
+    }
+}
+
+上面是根据流程定义表(act_re_procdef)的版本号来降序排列的！那万一我们还要分页查
+询呢？以码明示：
+
+public class HelloWorld {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+
+    /**
+     * 查询流程定义
+     */
+    @Test
+    public void test5() {
+        // 流程定义查询对象，用于查询流程定义表（act_re_procdef）
+        ProcessDefinitionQuery query = processEngine.getRepositoryService().createProcessDefinitionQuery();
+        // 根据流程定义的key来过滤
+        query.processDefinitionKey("qjlc");
+        // 添加排序条件
+        query.orderByProcessDefinitionVersion().desc();
+        // 分页查询（伪代码）
+        query.listPage("从哪开始查", "查几条");
+        List<ProcessDefinition> list = query.list();
+        for (ProcessDefinition pd : list) {
+            System.out.println(pd.getId() + "    " + pd.getName() + "    " + pd.getVersion());
+        }
+    }
+}
+
+启动流程实例
+
+什么是流程实例？根据某个流程定义的一次具体执行过程，就是一个流程实例。流程定义
+和流程实例是一对多的关系。在本例中，根据请假流程定义来具体地请一次假，就是启动
+流程实例了。
+启动流程实例操作的数据表有流程实例表(act_ru_execution)、任务表(act_ru_task)。我
+在HelloWorld单元测试类中编写如下单元测试方法：
+
+public class HelloWorld {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+
+    /**
+     * 启动流程实例
+     */
+    @Test
+    public void test6() {
+        String processDefinitionId = "qjlc:2:104"; // 流程定义id
+        ProcessInstance processInstance = processEngine.getRuntimeService()
+                .startProcessInstanceById(processDefinitionId); // 根据请假流程定义来具体地请一次假，即启动流程实例
+        System.out.println(processInstance.getId());
+    }
+}
+
+运行以上方法，流程实例表(act_ru_execution)里面就会插入一条数据，如下：
+这里写图片描述
+ACT_ID_字段的值意味着流程向下推进到哪个地步了，上面表中ACT_ID_字段的值是
+usertask1，表示流程推进到【提交请假申请】这一步了。
+除此之外，任务表(act_ru_task)里面也会插入一条数据，如下：
+这里写图片描述
+从上表可知，张三有一个任务——提交请假申请要办理。
+
+查询任务
+
+查询任务操作的数据表是任务表(act_ru_task)。我在HelloWorld单元测试类中编写如下单
+元测试方法：
+
+public class HelloWorld {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+
+    /**
+     * 查询任务
+     */
+    @Test
+    public void test7() {
+        // 任务查询对象，操作的是任务表(act_ru_task)
+        TaskQuery query = processEngine.getTaskService().createTaskQuery();
+        // 根据任务的办理人过滤
+        query.taskAssignee("张三"); // 只查询张三的任务，其他人的任务不查
+        // query.taskAssignee("李四"); 
+        // query.taskAssignee("王五"); 
+        List<Task> list = query.list();
+        for (Task task : list) {
+            System.out.println(task.getId() + "\t" + task.getName() + "\t" + task.getAssignee());
+        }
+    }
+}
+
+上面只查询了张三的任务，其他人的任务没查，因为从任务表(act_ru_task)知道张三有一
+个任务——提交请假申请要办理嘛。当流程一步一步向下推进，任务也会不断发生变化，具
+体地就要根据任务的办理人来过滤了。
+
+办理任务
+
+办理任务操作的数据表有任务表(act_ru_task)、流程实例表(act_ru_execution)。我在
+HelloWorld单元测试类中编写如下单元测试方法：
+
+public class HelloWorld {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+
+    /**
+     * 办理任务
+     */
+    @Test
+    public void test8() {
+        String taskId = "304"; // 任务的id
+        processEngine.getTaskService().complete(taskId);
+    }
+}
+
+我们查询出张三的任务之后，张三就要办理它，办理完之后，流程向下推进到【项目经理
+审批】这一步，故任务表(act_ru_task)就要发生变化，如下：
+这里写图片描述
+从上表可知，李四现在有一个任务——项目经理审批要办理了。除此之外，流程实例表
+(act_ru_execution)也要发生变化，如下：
+这里写图片描述
+上面表中ACT_ID_字段的值是usertask2，就已经表示流程推进到【项目经理审批】这一步
+了。
+现在我们就要明确一个概念，流程一步一步向下推进，并不是我们去控制的，而是由工作
+流框架来帮我们推进的。我们要做的事就是将任务查出来，把它办理完，办理完之后，它
+会自动地由工作流框架来推进到下一个任务，所以，由工作流框架负责任务一步一步地向
+下推进，因为我们当时已经把流程部署进去了，也即说这个规则工作流框架是知道的，所
+以，我们只需要将任务查出来，把它办理完。流程实例表(act_ru_execution)也要发生变
+化，ACT_ID_这个字段的值更新了，因为流程向下推进了一步，所以ACT_ID_这个字段的值
+也需要更新。
+下面就很简单了，将李四的任务查询出来，然后办理之。这样流程向下推进到【部门经理
+审批】这一步，故任务表(act_ru_task)就要发生变化，如下：
+这里写图片描述
+从上表可知，王五现在有一个任务——部门经理审批要办理了。除此之外，流程实例表
+(act_ru_execution)也要发生变化，如下：
+这里写图片描述
+上面表中ACT_ID_字段的值是usertask3，就已经表示流程推进到【部门经理审批】这一步
+了。
+接着再将王五的任务查询出来，然后办理之。这样一来，任务表(act_ru_task)和流程实例
+表(act_ru_execution)就没有任何数据了，整个请假流程就走完了。
+
+部署流程定义的两种方式
+
+部署流程定义其实有两种方式，第一种方式是加载单个的流程定义文件，正如我之前所讲
+解的那样。下面再来讲一下这种方式，大家可以加深印象。
+在cn.itcast.activiti包下再新建一个ActivitiAPITest单元测试类，并在该类中编写如下
+单元测试方法：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 部署流程定义
+     */
+    @Test
+    public void test1() {
+        DeploymentBuilder deploymentBuilder = processEngine
+                .getRepositoryService().createDeployment();
+        // 方式一：加载单个的流程定义文件
+        deploymentBuilder.addClasspathResource("qjlc.bpmn");
+        deploymentBuilder.addClasspathResource("qjlc.png");
+        deploymentBuilder.deploy();
+    }
+
+}
+
+运行以上方法，即可在部署表(act_re_deployment)里面新增一条记录，如下：
+这里写图片描述
+部署流程定义的第二种方式是加载zip压缩文件。我们可以将process源码目录下的两个流
+程定义文件压缩为一个zip格式的压缩文件，比如process.zip。
+这里写图片描述
+如此一来，就要将test1方法修改为：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 部署流程定义
+     */
+    @Test
+    public void test1() {
+        DeploymentBuilder deploymentBuilder = processEngine
+                .getRepositoryService().createDeployment();
+        // 方式二：加载zip压缩文件
+        ZipInputStream zipInputStream = new ZipInputStream(this.getClass()
+                .getClassLoader().getResourceAsStream("process.zip")); // 从类路径下读取process.zip压缩文件，并把它包装成一个输入流
+        deploymentBuilder.addZipInputStream(zipInputStream );
+        deploymentBuilder.deploy();
+    }
+
+}
+
+运行以上方法，又在部署表(act_re_deployment)里面新增一条记录，如下：
+这里写图片描述
+
+查询部署信息
+
+在ActivitiAPITest单元测试类中编写如下单元测试方法：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 查询部署信息
+     */
+    @Test
+    public void test2() {
+        // 部署查询对象，查询部署表
+        DeploymentQuery query = processEngine.getRepositoryService().createDeploymentQuery();
+        List<Deployment> list = query.list();
+        for (Deployment deployment : list) {
+            System.out.println(deployment.getId() + "\t" + deployment.getDeploymentTime());
+        }
+    }
+
+}
+
+运行以上方法即可查询出部署表(act_re_deployment)中所有的记录。
+
+删除部署信息
+
+删除部署信息时，同时对应操作的数据库表有部署表(act_re_deployment)、流程定义表
+(act_re_procdef)和二进制表(act_ge_bytearray)。我在ActivitiAPITest单元测试类中编
+写如下单元测试方法：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 删除部署信息
+     */
+    @Test
+    public void test3() {
+        String deploymentId = "801"; // 部署id
+        processEngine.getRepositoryService().deleteDeployment(deploymentId);
+    }
+
+}
+
+运行以上方法，部署表(act_re_deployment)里面ID_为801的部署信息被删除掉了，附带着
+流程定义表(act_re_procdef)里面DEPLOYMENT_ID_为801的流程定义信息也被删掉了，当然
+了二进制表(act_ge_bytearray)里面DEPLOYMENT_ID_为801的两条记录同样也被删除掉了。
+void deleteDeployment(String deploymentId);方法有一个重载方法：
+
+  • void deleteDeployment(String deploymentId, boolean cascade);
+    cascade：是否级联删除，若cascade=false，则不级联删除；若cascade=true，则级
+    联删除。
+
+先将cascade置为false，为了便于测试，我先启动流程定义id为qjlc:1:4的流程实例，从
+流程定义表(act_re_procdef)中可以很明显的看出该实例的DEPLOYMENT_ID_字段的值为1，
+如下：
+这里写图片描述
+启动流程定义id为qjlc:1:4的流程实例的代码为：
+
+public class HelloWorld {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 启动流程实例
+     */
+    @Test
+    public void test6() {
+        String processDefinitionId = "qjlc:1:4"; // 流程定义id
+        ProcessInstance processInstance = processEngine.getRuntimeService()
+                .startProcessInstanceById(processDefinitionId); // 根据请假流程定义来具体地请一次假，即启动流程实例
+        System.out.println(processInstance.getId());
+    }
+
+}
+
+运行以上方法，流程实例表(act_ru_execution)里面就会插入一条数据，如下：
+这里写图片描述
+ACT_ID_字段的值意味着流程向下推进到哪个地步了，上面表中ACT_ID_字段的值是
+usertask1，表示流程推进到【提交请假申请】这一步了。
+除此之外，任务表(act_ru_task)里面也会插入一条数据，如下：
+这里写图片描述
+从上表可知，张三有一个任务——提交请假申请要办理。
+启动流程实例完毕之后，把ActivitiAPITest单元测试类中的test3方法修改为：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 删除部署信息
+     * 删除部署信息时，同时对应操作的数据库表有act_re_deployment、act_re_procdef、act_ge_bytearray
+     */
+    @Test
+    public void test3() {
+        String deploymentId = "1"; // 部署id
+        boolean cascade = false; // 是否级联删除，false表示不级联删
+        processEngine.getRepositoryService().deleteDeployment(deploymentId, cascade);
+    }
+
+}
+
+运行以上方法，这样当删除部署id为1的部署信息时，就会抛出一个
+org.apache.ibatis.exceptions.PersistenceException异常，可见并没有删除成功，因为
+有外键约束。
+我们就想删除成功呢？则可以将cascade置为true，但不建议这么做。再次把
+ActivitiAPITest单元测试类中的test3方法修改为：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 删除部署信息
+     * 删除部署信息时，同时对应操作的数据库表有act_re_deployment、act_re_procdef、act_ge_bytearray
+     */
+    @Test
+    public void test3() {
+        String deploymentId = "1"; // 部署id
+        boolean cascade = true;
+        processEngine.getRepositoryService().deleteDeployment(deploymentId, cascade);
+    }
+
+}
+
+这样当删除部署id为1的部署信息时，不禁发现部署表(act_re_deployment)里面ID_为1的
+部署信息被删除掉了，附带着流程定义表(act_re_procdef)里面DEPLOYMENT_ID_为1的流程
+定义信息也被删掉了，还有流程实例表(act_ru_execution)和任务表(act_ru_task)中
+PROC_DEF_ID_字段的值为qjlc:1:4的记录也被删除掉了。
+
+获得流程定义文件名称和输入流
+
+假设现在有这样一个需求：查询最新版本的流程定义数据。给出流程定义表
+(act_re_procdef)，如下：
+这里写图片描述
+要实现这样一个需求，特简单，在ActivitiAPITest单元测试类中编写如下测试方法：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 查询最新版本的流程定义数据
+     */
+    @Test
+    public void test4() {
+        // 流程定义查询对象，查询的是流程定义表(act_re_procdef)
+        ProcessDefinitionQuery query = processEngine.getRepositoryService().createProcessDefinitionQuery();
+        // 最新版本过滤
+        query.latestVersion();
+        List<ProcessDefinition> list = query.list();
+        for (ProcessDefinition processDefinition : list) {
+            System.out.println(processDefinition.getId());
+        }
+    }
+
+}
+
+好了，回到这一小节的主题，关于如何获得流程定义文件名称和输入流，我个人总结为两
+种方式。
+【第一种方式】，根据客户端传过来的部署id进行获取。在ActivitiAPITest单元测试类中
+编写如下测试方法：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 查询一次部署对应的流程定义文件名称和输入流
+     * @throws IOException
+     */
+    @Test
+    public void test5() throws IOException {
+        String deploymentId = "201"; // 部署id
+        // 获得两个流程定义文件的名称
+        List<String> names = processEngine
+                .getRepositoryService().getDeploymentResourceNames(deploymentId);
+        for (String name : names) {
+            System.out.println(name);
+            // 获得两个流程定义文件对应的输入流
+            InputStream in = processEngine
+                    .getRepositoryService().getResourceAsStream(deploymentId, name);
+            // 读取输入流写到指定的本地磁盘上
+            FileUtils.copyInputStreamToFile(in, new File("F:\\" + name));
+            in.close();
+        }
+    }
+
+}
+
+运行以上方法，除了在Eclipse控制台打印两个流程定义文件的名称，F盘上也会生成两个
+流程定义文件：
+
+  • qjlc.bpmn
+  • qjlc.png
+
+【第二种方式】，根据客户端传过来的流程定义id进行获取。在ActivitiAPITest单元测试
+类中编写如下测试方法：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 获得文件名称和输入流
+     * @throws IOException
+     */
+    @Test
+    public void test6() throws IOException {
+        String processDefinitionId = "qjlc:2:104"; // 流程定义id
+        // 直接获得png图片的名称
+        // 根据流程定义id查询流程定义对象
+        ProcessDefinitionQuery query = processEngine.getRepositoryService().createProcessDefinitionQuery();
+        query.processDefinitionId(processDefinitionId);
+        ProcessDefinition processDefinition = query.singleResult();
+        // 根据流程定义对象获得png图片的名称
+        String pngName = processDefinition.getDiagramResourceName();
+
+        // 直接获得png图片对应的输入流
+        InputStream pngStream = processEngine.getRepositoryService().getProcessDiagram(processDefinitionId);
+        // 读取输入流写到指定的本地磁盘上
+        FileUtils.copyInputStreamToFile(pngStream, new File("F:\\" + pngName));
+        pngStream.close();
+    }
+
+}
+
+这种方式只是获取到png图片的名称和其对应的输入流。
+
+流程实例操作（启动、查询、删除）
+
+启动流程实例
+
+启动流程实例可分为两种方式：
+
+  • 方式一：根据流程定义的id来启动流程实例
+  • 方式二：根据流程定义的key来启动流程实例，建议使用
+
+先讲第一种方式，我们之前启动流程实例时就是使用的这种方式。现在再讲一遍加深印象
+。给出流程定义表(act_re_procdef)，如下：
+这里写图片描述
+现在我们想启动流程定义id为qjlc:2:104的流程实例，可在ActivitiAPITest单元测试类中
+编写如下测试方法：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 启动流程实例
+     */
+    @Test
+    public void test7() {
+        String processDefinitionId = "qjlc:2:104"; // 流程定义的id
+        // 方式一：根据流程定义的id来启动流程实例
+        ProcessInstance processInstance = processEngine.getRuntimeService()
+                .startProcessInstanceById(processDefinitionId);
+        System.out.println(processInstance.getId());
+    }
+
+}
+
+再讲第二种方式，这种方式也是被推荐使用的，即根据流程定义的key来启动流程实例，该
+方式可以自动选择最新版本的流程定义来启动流程实例。以码明示，将ActivitiAPITest单
+元测试类中的test7方法改为：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 启动流程实例
+     */
+    @Test
+    public void test7() {
+        String processDefinitionKey = "qjlc"; // 流程定义的key
+        // 方式二：根据流程定义的key来启动流程实例(建议)——可以自动选择最新版本的流程定义来启动流程实例
+        ProcessInstance processInstance = processEngine.getRuntimeService().startProcessInstanceByKey(processDefinitionKey);
+        System.out.println(processInstance.getId());
+    }
+
+}
+
+运行以上方法，启动的是流程定义id为qjlc:4:704的流程实例，给出流程实例表
+(act_ru_execution)，如下：
+这里写图片描述
+
+查询流程实例
+
+查询流程实例操作的是流程实例表(act_ru_execution)。在ActivitiAPITest单元测试类中
+编写如下测试方法：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 查询流程实例
+     */
+    @Test
+    public void test8() {
+        // 流程实例查询对象，操作的是流程实例表(act_ru_execution)
+        ProcessInstanceQuery query = processEngine.getRuntimeService().createProcessInstanceQuery();
+        List<ProcessInstance> list = query.list();
+        for (ProcessInstance processInstance : list) {
+            System.out.println(processInstance.getId());
+        }
+    }
+
+}
+
+删除流程实例
+
+何谓删除流程实例？举个例子，某人把请假流程启动之后，又不想请假了，那意味着后面
+的人就不用帮他审批了，所以就需要把这个流程实例删除掉。如要删除流程实例id为1001
+的那个流程实例，则可在ActivitiAPITest单元测试类中编写如下测试方法进行测试：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 删除流程实例
+     */
+    @Test
+    public void test9() {
+        String processInstanceId = "1001"; // 流程实例id
+        String deleteReason = "不请假了"; // 删除原因，任君写
+        processEngine.getRuntimeService().deleteProcessInstance(processInstanceId, deleteReason);
+    }
+
+}
+
+运行以上方法，流程实例id为1001的流程实例被删除掉了，附带着任务表(act_ru_task)里
+面EXECUTION_ID_字段为1001的那条记录也被删除掉了。
+
+任务操作（查询、办理）
+
+查询任务
+
+查询任务对应操作的数据库表是任务表(act_ru_task)。在ActivitiAPITest单元测试类中
+编写如下测试方法进行测试：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 查询任务
+     */
+    @Test
+    public void test10() {
+        // 任务查询对象，对应操作的数据库表是任务表(act_ru_task)
+        TaskQuery query = processEngine.getTaskService().createTaskQuery();
+        query.taskAssignee("张三");
+        List<Task> list = query.list();
+        for (Task task : list) {
+            System.out.println(task.getId() + "\t" + task.getName());
+        }
+    }
+
+}
+
+上面只查询了张三的任务，其他人的任务没查，因为从任务表(act_ru_task)知道张三有一
+个任务——提交请假申请要办理嘛。当流程一步一步向下推进，任务也会不断发生变化，具
+体地就要根据任务的办理人来过滤了。
+
+办理任务
+
+办理任务操作的数据表有任务表(act_ru_task)、流程实例表(act_ru_execution)。我在
+ActivitiAPITest单元测试类中编写如下单元测试方法：
+
+public class ActivitiAPITest {
+
+    ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+    /**
+     * 办理任务
+     */
+    @Test
+    public void test11() {
+        String taskId = "1104"; // 任务id
+        processEngine.getTaskService().complete(taskId);
+    }
+
+}
+
+我们查询出张三的任务之后，张三就要办理它，办理完之后，流程向下推进到【项目经理
+审批】这一步，故任务表(act_ru_task)就要发生变化，如下：
+这里写图片描述
+从上表可知，李四现在有一个任务——项目经理审批要办理了。除此之外，流程实例表
+(act_ru_execution)也要发生变化，如下：
+这里写图片描述
+上面表中ACT_ID_字段的值是usertask2，就已经表示流程推进到【项目经理审批】这一步
+了。
+现在我们就要明确一个概念，流程一步一步向下推进，并不是我们去控制的，而是由工作
+流框架来帮我们推进的。我们要做的事就是将任务查出来，把它办理完，办理完之后，它
+会自动地由工作流框架来推进到下一个任务，所以，由工作流框架负责任务一步一步地向
+下推进，因为我们当时已经把流程部署进去了，也即说这个规则工作流框架是知道的，所
+以，我们只需要将任务查出来，把它办理完。流程实例表(act_ru_execution)也要发生变
+化，ACT_ID_这个字段的值更新了，因为流程向下推进了一步，所以ACT_ID_这个字段的值
+也需要更新。
+下面就很简单了，将李四的任务查询出来，然后办理之。这样流程向下推进到【部门经理
+审批】这一步，故任务表(act_ru_task)就要发生变化，如下：
+这里写图片描述
+从上表可知，王五现在有一个任务——部门经理审批要办理了。除此之外，流程实例表
+(act_ru_execution)也要发生变化，如下：
+这里写图片描述
+上面表中ACT_ID_字段的值是usertask3，就已经表示流程推进到【部门经理审批】这一步
+了。
+接着再将王五的任务查询出来，然后办理之。这样一来，任务表(act_ru_task)和流程实例
+表(act_ru_execution)就没有任何数据了，整个请假流程就走完了。
+
+总结activiti中的几个对象
+
+  • 几个和流程相关的对象
+      □ Deployment：部署对象，和部署表(act_re_deployment)对应
+      □ ProcessDefinition：流程定义对象，和流程定义表(act_re_procdef)对应
+      □ ProcessInstance：流程实例对象，和流程实例表(act_ru_execution)对应
+      □ Task：任务对象，和任务表(act_ru_task)对应
+  • 几个Service对象
+      □ RepositoryService：操作部署、流程定义等静态资源信息
+      □ RuntimeService：操作流程实例，启动流程实例、查询流程实例、删除流程实例
+        等动态信息
+      □ TaskService：操作任务，查询任务、办理任务等和任务相关的信息
+      □ HistoryService：操作历史信息的，查询历史信息
+      □ IdentityService：操作用户和组
+  • 几个Query对象
+      □ DeploymentQuery：对应查询部署表(act_re_deployment)
+      □ ProcessDefinitionQuery：对应查询流程定义表(act_re_procdef)
+      □ ProcessInstanceQuery：对应查询流程实例表(act_ru_execution)
+      □ TaskQuery：对应查询任务表(act_ru_task)
+
+阅读更多
+想对作者说点什么？我来说一句
+ 
+
+Activiti工作流框架学习（二）——使用Activiti提供的API完成流程操作
+
+qq_21399933 qq_21399933
+
+10-18 916
+
+可以在项目中加入log4j，将logj4.properties文件拷入到src目录下，这样框架执行的sql
+就可以输出到到控制台，log4j提供的日志级别有以下几种： Fatal  error  war...
+
+ 
+
+工作流Activity框架入门（一）
+
+Evan_Leung Evan_Leung
+
+06-05 1.6万
+
+Activity工作流入门 1. 工作流概念工作流(Workflow)，就是“业务过程的部分或整体在计
+算机应用环境下的自动化”，它主要解决的是“使在多个参与者之间按照某种预定义的规则
+传递文档、信息...
+
+ 
+
+三分钟明白 Activity工作流 -- java运用
+
+zbdxcyg zbdxcyg
+
+11-13 7327
+
+一、什么是工作流　　以请假为例，现在大多数公司的请假流程是这样的　　员工打电话
+（或网聊）向上级提出请假申请——上级口头同意——上级将请假记录下来——月底将请假记录
+上交公司——公司将请假录入电脑　　采...
+
+ 
+下载
+
+activiti工作流（超详细）
+
+04-07
+activiti工作流文档，超详细，从0基础开始入门，包括数据库介绍、核心api等介绍，满
+足日常开发所需
+ 
+
+手把手教你如何玩转Activiti工作流
+
+Cs_hnu_scw Cs_hnu_scw
+
+01-30 1.2万
+
+一：Activiti的介绍场景：学校     主角：阿毛  ，   班主任   ，教务处处长问题：有
+一天，阿毛到学校，感觉到身体不舒服，然后想跟班主任请假，然后班主任告诉阿毛说，
+你想请假，那...
+
+ 
+
+Activiti工作流引擎使用详解
+
+m0_37327416 m0_37327416
+
+05-12 3.1万
+
+Activiti工作流引擎使用 1.简单介工作流引擎与Activiti 对于工作流引擎的解释请参考
+百度百科：工作流引擎 1.1 我与工作流引擎在第一家公司工作的时候主...
+
+ 
+
+1.activiti工作流-helloworld
+
+qq_31776219 qq_31776219
+
+06-01 633
+
+1.下载activitihttp://activiti.org/download.html 打开源码包，进入wars的实例工程
+，\activiti-5.22.0\wars\WEB-INF\lib，导...
+
+ 
+
+Activiti工作流-入门
+
+shuaicihai shuaicihai
+
+03-08 922
+
+Activiti工作流的流程定义、流程实例、任务管理
+
+ 
+
+【Activiti工作流】3.准备Activiti开发环境
+
+u013517797 u013517797
+
+02-24 1.1万
+
+一、准备环境 1.activiti软件环境 1)JDK1.6或者更高版本 2)支持的数据库有：h2,
+mysql, oracle, postgres, mysql, db2等。 3)支持activ...
+
+ 
+
+Activiti工作流引擎的官方实例配置详细步骤
+
+YEN_CSDN YEN_CSDN
+
+01-20 2.6万
+
+概述创建Java web项目复制文件到web项目中创建数据库启动运行示例配置完成概述学习
+Activiti工作流引擎，第一步自然是是下载官方提供的Demo源码来参考。 Activiti官网
+：...
+
+博主推荐
+
+换一批
+[feedLoadin]
+
+没有更多推荐了，返回首页
+
+[3_yerenyua]
+
+李阿昀
+
+关注
+
+原创
+    399
+
+粉丝
+    2782
+
+喜欢
+    893
+
+评论
+    889
+
+等级：
+     
+
+访问：
+    165万+
+
+积分：
+    1万+
+
+排名：
+    864
+
+勋章：
+
+专栏达人
+
+授予成功创建个人博客专栏的用户。专栏中添加五篇以上博文即可点亮！撰写博客专栏浓
+缩技术精华，专栏达人就是你！
+
+持之以恒
+
+授予每个自然月内发布4篇或4篇以上原创或翻译IT博文的用户。不积跬步无以至千里，不
+积小流无以成江海，程序人生的精彩需要坚持不懈地积累！
+
+最新文章
+
+  • 第二十八讲常用类——基本数据类型对象包装类
+  • 第二十七讲常用类——StringBuffer与StringBuilder
+  • 第二十六讲常用类——String
+  • 第XX讲 Eclipse进行可视化插件——WindowBuilder的安装
+  • 第二十五讲多线程——线程类的其他方法
+
+博主专栏
+
+  • [120]
+
+    手把手教你学习Spring框架
+
+    阅读量：18655634 篇
+  • [120]
+
+    Hibernate框架学习
+
+    阅读量：6137212 篇
+  • [120]
+
+    Struts2框架学习
+
+    阅读量：68125 篇
+  • [120]
+
+    SSH项目实战
+
+    阅读量：371992 篇
+  • [120]
+
+    有关Oracle学习
+
+    阅读量：00 篇
+  • [120]
+
+    李阿昀的Linux学习笔记
+
+    阅读量：00 篇
+  • [120]
+
+    从零开始学习Maven
+
+    阅读量：38353 篇
+  • [120]
+
+    MyBatis+SpringMVC
+
+    阅读量：14604519 篇
+  • [120]
+
+    那些我接触过的J2EE组件
+
+    阅读量：00 篇
+  • [120]
+
+    项目实战之淘淘商城
+
+    阅读量：340589102 篇
+  • [120]
+
+    Java语言编程基础
+
+    阅读量：1172315 篇
+
+展开
+
+个人分类
+
+  • Java Web基础 82篇
+  • HTML+CSS学习 3篇
+  • 理解计算机 1篇
+  • MySQL 2篇
+  • Java基础加强 6篇
+  • Struts1框架 5篇
+  • Struts2框架 17篇
+  • Hibernate框架 25篇
+  • 阿昀手把手教你学习Spring框架 35篇
+  • ● Java编程语言 27篇
+  • ▬▬▬▬▬【Java入门】 26篇
+  • ▬▬▬▬▬【Java基础面试题集锦】 1篇
+  • ▬▬▬▬▬【Java Web面试题集锦】 1篇
+  • ▬▬▬▬▬【设计模式】 1篇
+  • ▬【我的《Head First HTML与CSS》读书心得】 8篇
+  • ▬▬▬【教你一天玩转JavaScript】 8篇
+  • ▬▬▬【一天快速搞定jQuery】 5篇
+  • ▬▬▬【Ajax学习】 1篇
+  • GitHub学习记录 1篇
+  • Linux基础学习 9篇
+  • Oracle基础学习 4篇
+  • maven学习系列 3篇
+  • UML工具——Power Designer 1篇
+  • Activiti工作流框架的点滴 2篇
+  • MyBatis框架学习 7篇
+  • SpringMVC框架学习 12篇
+  • Lucene与Solr 3篇
+  • SVN 2篇
+  • 阿昀的淘淘商城系列 102篇
+
+展开
+
+归档
+
+  • 2018年9月 15篇
+  • 2018年8月 11篇
+  • 2018年4月 3篇
+  • 2018年3月 2篇
+  • 2017年10月 10篇
+  • 2017年7月 2篇
+  • 2017年6月 77篇
+  • 2017年5月 63篇
+  • 2017年4月 22篇
+  • 2017年3月 19篇
+  • 2017年2月 8篇
+  • 2017年1月 7篇
+  • 2016年12月 7篇
+  • 2016年11月 2篇
+  • 2016年10月 49篇
+  • 2016年9月 41篇
+  • 2016年8月 36篇
+  • 2016年7月 25篇
+
+展开
+
+热门文章
+
+  • eclipse环境下如何配置tomcat，并且把项目部署到Tomcat服务器上
+
+    阅读量：315917
+
+  • Spring的概述
+
+    阅读量：52808
+
+  • MyBatis框架的学习(七)——MyBatis逆向工程自动生成代码
+
+    阅读量：49255
+
+  • Activiti工作流框架学习笔记(一)
+
+    阅读量：32485
+
+  • Hibernate框架基础——Hibernate入门
+
+    阅读量：28937
+
+最新评论
+
+  • eclipse环境下如何配置tom...
+
+    yueqingchun：那个下载tomcat8.0时，目录位置没有找到那个apache啊
+
+  • 淘淘商城系列——实现图片上传功能
+
+    pface：[reply]qq_32507859[/reply] 换个浏览器就行了
+
+  • Linux系统上安装JDK
+
+    qq_38181513：yum -y remove java javaxxx可以删除自带的openjdk
+
+  • MyBatis框架的学习(七)——...
+
+    qq_38181513：https://download.csdn.net/download/qq_38181513/10...
+
+  • 淘淘商城系列——服务调用测试
+
+    hmh13548571896：[reply]weixin_36205175[/reply]我也是报这个错
+
+登录
+注册
+
+  • 点赞取消点赞
+   
+    24
+   
+  • 评论
+
+    50
+
+  • 目录
+  • 收藏
+  •  手机看
+  • 上一篇
+  • 下一篇
+  • 
+    [2016080217]
+  • 更多
+      □ 上一篇
+      □ 下一篇
+

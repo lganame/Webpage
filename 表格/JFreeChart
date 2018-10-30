@@ -1,0 +1,344 @@
+  • 百度首页
+
+网页新闻贴吧知道音乐图片视频地图文库百科
+ 
+[jfreechart          ]进入词条全站搜索帮助
+  • 清除历史记录关闭
+
+声明：百科词条人人可编辑，词条创建和修改均免费，绝不存在官方及代理商付费代编，
+请勿上当受骗。详情>>
+
+首页
+    历史上的今天
+    百科冷知识
+    图解百科
+
+分类
+    艺术
+    科学
+    自然
+    文化
+    地理
+    生活
+    社会
+    人物
+    经济
+    体育
+    历史
+
+特色百科
+    数字博物馆
+    非遗百科
+    多肉百科
+    恐龙百科
+    城市百科
+    二战百科
+
+用户
+    蝌蚪团
+    燃梦计划
+    百科任务
+    百科商城
+
+权威合作
+    合作模式
+    常见问题
+    联系方式
+
+手机百科
+    网页版
+
+个人中心
+  
+收藏
+查看我的收藏
+0 有用+1 已投票
+0
+
+  •  
+  •  
+  •  
+  •  
+
+    jfreechart
+
+    编辑锁定
+
+本词条缺少名片图，补充相关内容使词条更完整，还能快速升级，赶紧来编辑吧！
+JFreeChart是JAVA平台上的一个开放的图表绘制类库。它完全使用JAVA语言编写，是为
+applications, applets, servlets 以及JSP等使用所设计。JFreeChart可生成饼图（pie
+charts）、柱状图（bar charts）、散点图（scatter plots）、时序图（time series）
+、甘特图（Gantt charts）等等多种图表，并且可以产生PNG和JPEG格式的输出，还可以与
+PDF和EXCEL关联。
+
+外文名
+    jfreechart
+应用平台
+    JAVA平台
+
+类    别
+    开放的图表绘制类库
+产    生
+    PNG和JPEG格式的输出
+
+目录
+
+ 1. 1 简介
+ 2. 2 评价
+ 3. 3 下载和配置
+ 4. 4 实例参考
+
+jfreechart简介
+
+编辑
+JFreeChart截止2011年2月22日为止的相当不错的java图形解决方案，基本能够解决目前的
+图形方面的需求。
+JFreeChart Java图表库是一个100%免费的开源项目,使开发人员容易专业质量图表显示在
+他们的应用程序。 JFreeChart广泛的特性包括:
+
+  • 一致的和证据确凿的API,支持多种图表类型;
+  • 一个灵活的设计,很容易扩展,和目标服务器端和客户端应用程序;
+  • 支持多种输出类型,包括Swing组件、图像文件(包括PNG和JPEG)和矢量图形文件格式
+    (包括PDF、EPS和SVG);
+  • JFreeChart是“开源”,或者更具体地说, 自由软件。它是分布式的条件下 GNU通用公共
+    许可证 (LGPL),它允许使用专有应用程序。
+
+jfreechart评价
+
+编辑
+
+  • 稳定、轻量级且功能强大
+  • 免费开源，但是开发手册和示例要花钱购买
+  • API处理简单，很容易上手
+  • 生成的图表运行顺畅
+
+虽然JFreeChart的文档要收费，但好在国内还有很多人在使用JFreeChart，网上可以找到
+很多相关的使用教程，可以参考。JFreeChart的缺陷就是只适合生成图片，而且文字、图
+片都不是特别清晰，还需要进行一些调整，比较麻烦。在交互性方面它又比不上Flash图表
+工具，比如Open Flash Chart、AnyChart、FusionCharts等。
+^ [1] 
+
+jfreechart下载和配置
+
+编辑
+下载官方地址：参考应用资料
+解压缩后，将jfreechart-1.0.11.jar、jcommon-1.0.14.jar导入到应用中，就可以进行相
+关的开发。
+最好下载1.0之前的版本，官方提供了demo。开发文档需要收费的，所以还是在网上查阅相
+关资料
+
+jfreechart实例参考
+
+编辑
+jfreechart绘制柱状图
+importjava.io.File;
+importjava.io.IOException;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
+/*
+* 绘制柱状图
+* */
+public class BarChart3DDemo
+{
+public static void main(String[] args)
+{
+try
+{
+//设置主题
+ChartFactory.setChartTheme(Theme.getTheme());
+//构造数据
+DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+dataset.addValue(100, "JAVA","1");
+dataset.addValue(200, "js","1");
+dataset.addValue(200, "C++", "2");
+dataset.addValue(300, "C", "3");
+dataset.addValue(400, "HTML", "4");
+dataset.addValue(400, "CSS", "5");
+/*
+* public static JFreeChart createBarChart3D(
+* java.lang.String title, 设置图表的标题
+* java.lang.String categoryAxisLabel, 设置分类轴的标示
+* java.lang.String valueAxisLabel, 设置值轴的标示
+* CategoryDataset dataset, 设置数据
+* PlotOrientation orientation, 设置图表的方向
+* boolean legend, 设置是否显示图例
+* boolean tooltips,设置是否生成热点工具
+* boolean urls) 设置是否显示url
+*/
+JFreeChart chart = ChartFactory.createBarChart3D("编程语言统计", "语言",
+"学习人数", dataset, PlotOrientation.VERTICAL, true, false,
+false);
+//保存图表
+ChartUtilities.saveChartAsPNG(new File("E:/chart/BarChart3D.png"), chart, 800,
+500);
+System.out.println("绘图完成");
+}
+catch (IOException e)
+{
+e.printStackTrace();
+}
+}
+}
+===============================================================================
+====
+//一条线有点有数
+package Test;
+import java.awt.Color;
+import java.awt.Font;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.AxisSpace;
+import org.jfree.chart.labels.ItemLabelAnchor;
+import org.jfree.chart.labels.ItemLabelPosition;
+import org.jfree.chart.labels.StandardXYItemLabelGenerator;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.title.TextTitle;
+import org.jfree.data.time.Month;
+import org.jfree.data.time.TimeSeries;
+import org.jfree.data.time.TimeSeriesCollection;
+import org.jfree.ui.RectangleInsets;
+import org.jfree.ui.TextAnchor;
+public class try123 {
+public static void main(String[] args){
+//首先构造数据
+TimeSeries timeSeries = new TimeSeries("BMI", Month.class);
+// 时间曲线数据集合
+TimeSeriesCollection lineDataset = new TimeSeriesCollection();
+// 构造数据集合
+timeSeries.add(new Month(1, 2009), 45);
+timeSeries.add(new Month(2, 2009), 46);
+timeSeries.add(new Month(3, 2009), 1);
+timeSeries.add(new Month(4, 2009), 500);
+timeSeries.add(new Month(5, 2009), 43);
+timeSeries.add(new Month(6, 2009), 324);
+timeSeries.add(new Month(7, 2009), 632);
+timeSeries.add(new Month(8, 2009), 34);
+timeSeries.add(new Month(9, 2009), 12);
+timeSeries.add(new Month(10, 2009), 543);
+timeSeries.add(new Month(11, 2009), 32);
+timeSeries.add(new Month(12, 2009), 225);
+lineDataset.addSeries(timeSeries);
+JFreeChart chart = ChartFactory.createTimeSeriesChart("", "date", "bmi",
+lineDataset, true, true, true);
+//增加标题
+chart.setTitle(new TextTitle("XXXBMI指数", new Font("隶书", Font.ITALIC, 15)));
+chart.setAntiAlias(true);
+XYPlot plot = (XYPlot) chart.getPlot();
+plot.setAxisOffset(new RectangleInsets(10,10,10,10));//图片区与坐标轴的距离
+plot.setOutlinePaint(Color.PINK);
+plot.setInsets(new RectangleInsets(15,15,15,15));//坐标轴与最外延的距离
+// plot.setOrientation(PlotOrientation.HORIZONTAL);//图形的方向，包括坐标轴。
+AxisSpace as = new AxisSpace();
+as.setLeft(25);
+as.setRight(25);
+plot.setFixedRangeAxisSpace(as);
+chart.setPadding(new RectangleInsets(5,5,5,5));
+chart.setNotify(true);
+// 设置曲线是否显示数据点
+XYLineAndShapeRenderer xylineandshaperenderer = (XYLineAndShapeRenderer)
+plot.getRenderer();
+xylineandshaperenderer.setBaseShapesVisible(true);
+// 设置曲线显示各数据点的值
+XYItemRenderer xyitem = plot.getRenderer();
+xyitem.setBaseItemLabelsVisible(true);
+xyitem.setBasePositiveItemLabelPosition(new ItemLabelPosition
+(ItemLabelAnchor.INSIDE10, TextAnchor.BASELINE_LEFT));
+xyitem.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());
+xyitem.setBaseItemLabelFont(new Font("Dialog", 1, 14));
+plot.setRenderer(xyitem);
+//显示
+ChartFrame frame = new ChartFrame("try1", chart);
+frame.pack();
+frame.setVisible(true);
+}
+}
+===============================================================================
+====
+饼状图例子
+import java.awt.Font;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.StandardChartTheme;
+import org.jfree.data.general.DefaultPieDataset;
+public class jFreeChartDemo3 {
+public static void main(String[] args) {
+StandardChartTheme sct = new StandardChartTheme("CN");
+sct.setExtraLargeFont(new Font("隶书", Font.BOLD, 20));
+sct.setRegularFont(new Font("隶书", Font.BOLD, 20));
+sct.setLargeFont(new Font("隶书", Font.BOLD, 20));
+DefaultPieDataset dataset = new DefaultPieDataset();
+dataset.setValue("苹果", 100);
+dataset.setValue("梨子", 200);
+dataset.setValue("葡萄", 300);
+dataset.setValue("香蕉", 400);
+dataset.setValue("荔枝", 500);
+ChartFactory.setChartTheme(sct);
+JFreeChart jfreechart = ChartFactory.createPieChart3D("水果产量图", dataset,
+true, true, true);
+ChartFrame frame = new ChartFrame("报表练习", jfreechart);
+frame.setVisible(true);
+frame.pack();
+}
+}
+
+参考资料
+      □ 1.    Web图表开发工具JFreeChart评测  ．慧都控件网．2013-2-28[引用日期
+        2013-04-24]
+
+V百科往期回顾
+
+词条统计
+      □ 浏览次数：次
+      □ 编辑次数：28次历史版本
+      □ 最近更新： w_ou（2018-07-19）
+
+1 简介
+2 评价
+3 下载和配置
+4 实例参考  
+
+  
+  
+
+猜你关注
+
+新手上路
+    成长任务
+    编辑入门
+    编辑规则
+    本人编辑new
+
+我有疑问
+    我要质疑
+    在线客服
+    参加讨论
+    意见反馈
+
+投诉建议
+    举报不良信息
+    未通过词条申诉
+    投诉侵权信息
+    封禁查询与解封
+
+©2018 Baidu 使用百度前必读 | 百科协议 | 隐私政策 | 百度百科合作平台 | 京ICP证
+030173号 ●
+
+京公网安备11000002000001号
+
+ 
+[jfreechart          ]进入词条
+  • 清除历史记录关闭
+
+编辑收藏赞
+登录
+分享
+    
+分享到微信朋友圈
+打开微信“扫一扫”即可将网页分享至朋友圈
